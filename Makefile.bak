@@ -1,0 +1,15 @@
+CC=g++
+CFLAGS=-c -g -Wall
+
+all: main.o data.o
+	$(CC) main.o data.o -o main
+
+main.o: main.cpp
+	$(CC) $(CFLAGS) main.cpp
+
+data.o: data.h data.cpp
+	$(CC) data.h data.cpp
+
+clean:
+	rm *.o
+	rm main

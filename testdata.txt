@@ -1,0 +1,16 @@
+FUNCOM.sexy_001lwp	AU$1.09
+FUNCOM.sexy_008lwp	$1.11 
+Game.NDK	Free
+Game.SpeedCar2	Free
+Game.SpeedMoto	Free
+Snake.snake	Free
+ThemeBowl.snowydaylwp	Free
+ThemeBowl.spacelwp	Free
+Uxpp.UC	Free
+addon.simplylock.theme.example	Free
+addon.simplylock.theme.kanttii	Free
+addon.simplylock.theme.whiteText	Free
+air.BoobsJuggle	Free
+air.FUNCOM.AustraliaRadio	$2.02 
+air.FUNCOM.CaptionCamera	AU$1.96
+air.FUNCOM.CheckerMaster	AU$1.95
