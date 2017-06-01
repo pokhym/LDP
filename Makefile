@@ -2,7 +2,7 @@ EXENAME = test
 
 COMPILER = g++
 WARNINGS = -Wall
-COMPILER_OPTS = -c -g -O0 -Werror $(WARNINGS)
+COMPILER_OPTS = -c -g -O0 -Werror $(WARNINGS) -std=c++11
 LINKER = g++
 
 MAIN_OBJS = main.o data.o util.o

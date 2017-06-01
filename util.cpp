@@ -1,4 +1,5 @@
 #include "util.h"
+#include <random>
 
 #define TAB 0x09
 
@@ -131,4 +132,103 @@ int parseData(char const* filename, dataSet &data){
     // update m, n in the data set
     // recall the column=attribute and row=value
     return 0;
+}
+
+/* normalizeNeg1toPos1
+ * DESCRIPTION: normalizes each column of the input data set -1 to 1
+ * INPUTS: dataSet, outlier condition
+ * OUTPUTS: 0 on success -1 on fail
+ */
+int normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
+    if(data.get_m()==1 || data.get_n()==1 || outlier.size()==0)
+        return -1;
+    
+    // store the max values of each for normalization
+    vector<double> max(data.get_n(), 0.0);
+
+    // loop through rows and columns to obtain max
+    double max_curr_col; // maximum in current column
+    for(int n=1; n<data.get_n(); n++){
+        for(int m=0; m<data.get_m(); m++){
+            if(data.get_dataMtx(m,n)>max_curr_col)
+                max_curr_col=data.get_dataMtx(m,n); // update
+        }
+        // save into vector and iterate to next column
+        max[n]=max_curr_col;
+    }
+    
+    // normalize per column
+    for(int n=1; n<data.get_n(); n++){
+        for(int m=0; n<data.get_m(); m++){
+            // if maximum is 0 (all outliers) don't do anything
+            if(max[n]==0){}
+
+            // else we need to normalize all nonzero values
+            else{
+                // if the data in that m,n is not an outlier normalize
+                if(data.get_dataMtx(m,n)!=outlier[n]){
+                    double new_val=data.get_dataMtx(m,n);
+                    new_val=new_val/(max[n]/2.0); // because we want range 2
+
+                    // values are now centered around 0-2 subtract by 1 to
+                    // center around -1 to 1
+                    new_val=new_val-1.0;
+
+                    // save new value into data
+                    data.set_dataMtx(m,n,new_val);
+                }
+
+                // else we need to set to 0
+                else{
+                    data.set_dataMtx(m,n,0.0);
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+
+/* tuplePerturbation
+ * DESCRIPTION: Implements algorithm 2 in the harmony algorithm
+ * INPUTS: dataSet containing all the columns, epsilon, and vector of outlier
+ * conditions
+ * OUTPUTS: perturbed value on success -1 on fail
+ */
+vector<double> tuplePerturbation(dataSet &data, double epsilon){
+    if(data.get_n()==0 || data.get_m()==0)
+        return vector<double>(-1);
+    
+    vector<double> perturbed(data.get_m(), 0.0); // store result here
+
+    // uniformally decide which attribute to calculate
+    // currently only one so ignore this step
+    int n=1;
+    
+    // loop through all the different entries (not attributes)
+    for(int i=0; i<data.get_m(); i++){
+        double probability, numerator, denominator;
+        //          ti[Aj]*(exp^(epsilon)-1)+exp^(epsilon)+1
+        // Pr[u=1]= ----------------------------------------
+        //                     2*exp^(epsilon)+2
+        
+        numerator=data.get_dataMtx(i, n)*(exp(epsilon)-1)+exp(epsilon)+1;
+        denominator=(double)exp(epsilon)+2;
+        probability=numerator/denominator;
+        
+        // generate random crap code pulled crom c++reference
+        random_device rd;
+        mt19937 gen(rd());
+        bernoulli_distribution d(probability); // set p
+
+        // grab data values from bernoulli
+        int bernoulli_result=d(gen);
+
+        // assign values
+        if(bernoulli_result)
+            perturbed[i]=(double)data.get_m()*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
+        else
+            perturbed[i]=-1.0;
+    }
+    return perturbed;
 }

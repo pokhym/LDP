@@ -5,9 +5,15 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cmath>
+#include <cmath>    // exp
+#include <random>   // bernoulli
+
 
 
 int parseData(char const* filename, dataSet &data);
+
+int normalizeNeg1toPos1(dataSet &data, std::vector<double> outlier);
+
+std::vector<double> tuplePerturbation(dataSet &data, double epsilon);
 
 #endif
