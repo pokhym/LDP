@@ -39,9 +39,7 @@ int dataSet::set_dataMtx(int m_in, int n_in, double val){
     if(m_in<0 || m_in>this->m || n_in<0 || n_in>this->n)
         return -1;
 
-    std::cout<<"set: "<<val<<std::endl;
     (*dataMtx)[m_in][n_in]=val;
-    std::cout<<(*dataMtx)[m_in][n_in]<<std::endl;
     return 0;
 }
 
@@ -76,7 +74,7 @@ int dataSet::rekeep_dataMtx(int m_in, int n_in){
         return -1;
 
     // resize automatically retains data
-    dataMtx->resize(n_in, std::vector<double>(m_in));
+    dataMtx->resize(m_in, std::vector<double>(n_in));
     m=m_in;
     n=n_in;
 
@@ -114,3 +112,5 @@ int dataSet::resize_dataMtx(int m_in, int n_in){
      n=n_in;
     return 0;
 }
+
+

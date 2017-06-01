@@ -50,10 +50,12 @@ int parseData(char const* filename, dataSet &data){
                     else{
                         if(temp_str[0]=='F'){
                             // save into data matrix
-                            //cout<<"row_count: "<<row_count<<endl;
+                            /*
+                             *cout<<"Free row_count: "<<row_count<<endl;
+                             */
                             data.rekeep_dataMtx(row_count, max_col);
-                            data.set_dataMtx(row_count, col_count, 0.0);
-                            data.set_dataMtx(0, row_count, row_count);
+                            data.set_dataMtx(row_count-1, col_count-1, 0.0);
+                            data.set_dataMtx(row_count-1, 0, row_count);
                         }
                         else{
                             for(int count=0; count<j; count++){                            
@@ -88,7 +90,9 @@ int parseData(char const* filename, dataSet &data){
                                             after_decimal++;
                                     }
                                     
-                                    cout<<"before dec after dec"<<before_decimal<<" "<<after_decimal<<endl;
+                                    /*
+                                     *cout<<"before dec after dec "<<before_decimal<<" "<<after_decimal<<endl;
+                                     */
 
                                     // calculate value before decimal
                                     for(int count4=0; count4<before_decimal; count4++){
@@ -102,13 +106,17 @@ int parseData(char const* filename, dataSet &data){
 
                                     }
 
-                                    cout<<val<<endl;
+                                    /*
+                                     *cout<<val<<endl;
+                                     */
 
                                     // save into data matrix
-                                    //cout<<"row_count: "<<row_count<<" "<<col_count<<endl;
+                                    /*
+                                     *cout<<"row_count: "<<row_count<<" col_count: "<<col_count<<endl;
+                                     */
                                     data.rekeep_dataMtx(row_count, max_col);
-                                    data.set_dataMtx(row_count, col_count, val);
-                                    data.set_dataMtx(0, row_count, row_count);
+                                    data.set_dataMtx(row_count-1, col_count-1, val);
+                                    data.set_dataMtx(row_count-1, 0, row_count);
 
                                     // reset values
                                     val=0;
@@ -120,7 +128,9 @@ int parseData(char const* filename, dataSet &data){
                     }
                 }
                 temp_str[j]=line[i]; // copy string
-                cout<<temp_str[j];
+                /*
+                 *cout<<temp_str[j];
+                 */
                 j++;
             }
             if(col_count>max_col)

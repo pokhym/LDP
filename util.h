@@ -16,4 +16,6 @@ int normalizeNeg1toPos1(dataSet &data, std::vector<double> outlier);
 
 std::vector<double> tuplePerturbation(dataSet &data, double epsilon);
 
+int calculateMean(dataSet &data);
+
 #endif

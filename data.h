@@ -21,6 +21,10 @@ class dataSet{
         // resize the data matrix and keep data
         int resize_dataMtx(int m_in, int n_in);
 
+        // edit column/attribute
+        int columnEdit(int n_in, std::vector<double> perturbedColumn);
+        
+
     private:
         int m, n;
         std::vector< std::vector<double> >* dataMtx;
