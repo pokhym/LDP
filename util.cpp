@@ -2,6 +2,7 @@
 #include <random>
 
 #define TAB 0x09
+#define LARGENUMBER 9999999999
 
 using namespace std;
 
@@ -154,22 +155,30 @@ int normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
         return -1;
     
     // store the max values of each for normalization
-    vector<double> max(data.get_n(), 0.0);
+    vector<double> max(data.get_n(), -LARGENUMBER);
+    vector<double> min(data.get_n(), LARGENUMBER);
 
     // loop through rows and columns to obtain max
-    double max_curr_col; // maximum in current column
+    double max_curr_col=-LARGENUMBER; // maximum in current column
+    double min_curr_col=LARGENUMBER; // minimum in current column
     for(int n=1; n<data.get_n(); n++){
         for(int m=0; m<data.get_m(); m++){
-            if(data.get_dataMtx(m,n)>max_curr_col)
-                max_curr_col=data.get_dataMtx(m,n); // update
+            if(data.get_dataMtx(m,n)!=outlier[n]){
+                if(data.get_dataMtx(m,n)>max_curr_col)
+                    max_curr_col=data.get_dataMtx(m,n); // update
+
+                if(data.get_dataMtx(m,n)<min_curr_col)
+                    min_curr_col=data.get_dataMtx(m,n); // update
+            }
         }
         // save into vector and iterate to next column
         max[n]=max_curr_col;
+        min[n]=min_curr_col;
     }
     
     // normalize per column
     for(int n=1; n<data.get_n(); n++){
-        for(int m=0; n<data.get_m(); m++){
+        for(int m=0; m<data.get_m(); m++){
             // if maximum is 0 (all outliers) don't do anything
             if(max[n]==0){}
 
@@ -178,11 +187,11 @@ int normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
                 // if the data in that m,n is not an outlier normalize
                 if(data.get_dataMtx(m,n)!=outlier[n]){
                     double new_val=data.get_dataMtx(m,n);
-                    new_val=new_val/(max[n]/2.0); // because we want range 2
-
-                    // values are now centered around 0-2 subtract by 1 to
+                    new_val=(new_val-min[n])/(max[n]-min[n]);
+                    
                     // center around -1 to 1
-                    new_val=new_val-1.0;
+                    new_val=new_val-0.5;
+                    new_val=new_val*2.0;
 
                     // save new value into data
                     data.set_dataMtx(m,n,new_val);
@@ -213,7 +222,7 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
 
     // uniformally decide which attribute to calculate
     // currently only one so ignore this step
-    int n=1;
+    int n=2;
     
     // loop through all the different entries (not attributes)
     for(int i=0; i<data.get_m(); i++){
@@ -233,12 +242,18 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
 
         // grab data values from bernoulli
         int bernoulli_result=d(gen);
-
+        
         // assign values
-        if(bernoulli_result)
-            perturbed[i]=(double)data.get_m()*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
-        else
-            perturbed[i]=-1.0;
+        if(bernoulli_result){
+            perturbed[i]=(double)(data.get_n()-1)*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
+        }
+        else{
+            perturbed[i]=(double)-1.0*(data.get_n()-1)*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
+        }
     }
+
+    // update matrix with the new perturbed column
+    data.columnSet(n, perturbed);
+    
     return perturbed;
 }

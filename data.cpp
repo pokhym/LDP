@@ -113,4 +113,19 @@ int dataSet::resize_dataMtx(int m_in, int n_in){
     return 0;
 }
 
-
+/* columnEdit
+ * DESCRIPTION: Edits one column of the dataMtx
+ * INPUTS: column to edit, new data
+ * OUTPUTS: 0 on success -1 on fail
+ */
+int dataSet::columnSet(int n_in, std::vector<double> perturbedColumn){
+    if(perturbedColumn.size()!=(unsigned int)m || n_in<1 || n_in>n)
+        return -1;
+    
+    // loop through all the values
+    for(int i=0; i<m; i++){
+        this->set_dataMtx(i, n_in-1, perturbedColumn[i]);
+    }
+    
+    return 0;
+}

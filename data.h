@@ -22,7 +22,7 @@ class dataSet{
         int resize_dataMtx(int m_in, int n_in);
 
         // edit column/attribute
-        int columnEdit(int n_in, std::vector<double> perturbedColumn);
+        int columnSet(int n_in, std::vector<double> perturbedColumn);
         
 
     private:
