@@ -1,15 +1,31 @@
-CC=g++
-CFLAGS=-c -g -Wall
+EXENAME = test
 
-all: main.o data.o
-	$(CC) main.o data.o -o main
+COMPILER = g++
+WARNINGS = -Wall
+COMPILER_OPTS = -c -g -O0 $(WARNINGS) -std=c++11
+LINKER = g++
 
-main.o: main.cpp
-	$(CC) $(CFLAGS) main.cpp
+MAIN_OBJS = main.o data.o util.o
+MAIN_DEPS = data.h data.cpp data.o util.h util.cpp util.o main.cpp
 
-data.o: data.h data.cpp
-	$(CC) data.h data.cpp
+DATA_DEPS = data.h
+UTIL_DEPS = util.h
+
+CODE_CLN = *.o $(EXENAME)
+
+all: $(EXENAME)
+
+$(EXENAME): main.o
+	$(LINKER) $(MAIN_OBJS) -o $(EXENAME)
+
+main.o: $(MAIN_DEPS)
+	$(COMPILER) $(COMPILER_OPTS) main.cpp
+
+util.o: $(UTIL_DEPS)
+	$(COMPILER) $(COMPILER_OPTS) util.cpp
+
+data.o: $(DATA_DEPS)
+	$(COMPILER) $(COMPILER_OPTS) data.cpp
 
 clean:
-	rm *.o
-	rm main
+	-rm -f $(CODE_CLN)

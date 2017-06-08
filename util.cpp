@@ -26,6 +26,8 @@ int parseData(char const* filename, dataSet &data){
     if(myfile.is_open()){
         // read all lines
         while(getline(myfile, line)){
+            row_count++;
+
             for(int i=0; i<(int)line.length(); i++){
                 // check for the delimiter
                 // parse the number from the last idx
@@ -35,20 +37,40 @@ int parseData(char const* filename, dataSet &data){
                 // NOTE: prev_data_idx and i are both representative of the end of
                 // the string aka it is either , or \n
                 if(line[i]==','){
-                    if(prev_data_idx!=0){prev_data_idx++;}
+                    col_count++;
+                    if(col_count>max_col){
+                        max_col=col_count;
+                    }
 
+                    // weird case
+                    if(prev_data_idx!=0){prev_data_idx++;}
+                    
+                    // enter null terminated
                     char temp_num_char[i-prev_data_idx+1];
                     temp_num_char[i-prev_data_idx]='\0';
+
+                    // copy
                     for(int j=0; j<i-prev_data_idx; j++){
                         temp_num_char[j]=line[j+prev_data_idx];
                     }
-                    prev_data_idx=i;
 
+                    // update next string beginning position
+                    prev_data_idx=i;
+                    
+                    // convert into a string so we can use stod
                     string temp_num_string=temp_num_char;
-                    cout<<temp_num_string<<" ";
+                    val=stod(temp_num_string);
+
+                    data.rekeep_dataMtx(row_count, max_col);
+                    data.set_dataMtx(row_count, col_count, val);
                 }
 
                 else if(line[i+1]=='\0'){
+                    col_count++;
+                    if(col_count>max_col){
+                        max_col=col_count;
+                    }
+
                     if(prev_data_idx!=0){prev_data_idx++;}
 
                     char temp_num_char[i-prev_data_idx];
@@ -59,16 +81,29 @@ int parseData(char const* filename, dataSet &data){
                     prev_data_idx=i;
 
                     string temp_num_string=temp_num_char;
-                    cout<<temp_num_string<<" ";
+                    val=stod(temp_num_string);
+
+                    data.rekeep_dataMtx(row_count, max_col);
+                    data.set_dataMtx(row_count, col_count, val);
                 }
             }
-            cout<<endl;
 
             prev_data_idx=0;
+            col_count=0;
         }
     }
-
-
+    
+    for(int i=0; i<data.get_m(); i++){
+        for(int j=0; j<data.get_n(); j++){
+            double asdf=data.get_dataMtx(i,j);
+            cout<<asdf<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+    
+    myfile.close();
+    
     return 0;
 }
 

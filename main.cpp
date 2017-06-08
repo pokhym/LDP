@@ -12,20 +12,21 @@ int main(){
     parseData("testdata.txt", *test_data);
 
     cout<<"parse end"<<endl;
-/*
- *    int m=test_data.get_m();
- *    int n=test_data.get_n();
- *
- *    cout<<"m: "<<m<< " n: "<<n<<endl;
- *
- *    for(int i=0; i<m; i++){
- *        for(int j=0; j<n; j++){
- *            cout<<setw(8)<<" "<<test_data.get_dataMtx(i,j);
- *        }
- *        cout<<endl;
- *    }
- */
+    int m=test_data->get_m();
+    int n=test_data->get_n();
+
+    cout<<"m: "<<m<< " n: "<<n<<endl;
+
+    for(int i=0; i<m; i++){
+        for(int j=0; j<n; j++){
+            //test_data->set_dataMtx(i+1,j+1,i+j);
+            cout<<setw(8)<<" "<<test_data->get_dataMtx(i,j);
+        }
+        cout<<endl;
+    }
     
+
+    delete test_data;
 /*
  *    cout<<endl;
  *

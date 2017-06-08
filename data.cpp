@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "data.h"
 
 /* dataSet()
@@ -38,7 +39,7 @@ int dataSet::set_dataMtx(int m_in, int n_in, double val){
     if(m_in<0 || m_in>this->m || n_in<0 || n_in>this->n)
         return -1;
 
-    dataMtx[m_in][n_in]=val;
+    dataMtx[m_in-1][n_in-1]=val;
     return 0;
 }
 
@@ -69,11 +70,24 @@ int dataSet::rekeep_dataMtx(int m_in, int n_in){
     // check bounds
     if(m_in==m && n_in==n)
         return 0;
-    else if(m_in<0 || n_in<0)
+    else if(m_in<0 || n_in<0 || m_in<m || n_in<n)
         return -1;
 
     // resize automatically retains data
-    dataMtx.resize(m_in, std::vector<double>(n_in));
+    // v seems broken it doesnt seem to take into account dynamic allocation need to do manual crap
+    // dataMtx.resize(m_in, std::vector<double>(n_in));
+ 
+    // generate new vector
+    std::vector< std::vector<double> > asdf(m_in, std::vector<double>(n_in, 0.0) );
+    
+    // copy into new one and reassign
+    for(int i=0; i<m; i++){
+        for(int j=0; j<n; j++){
+            asdf[i][j]=dataMtx[i][j];
+        }
+    }
+    dataMtx=asdf;
+
     m=m_in;
     n=n_in;
 
