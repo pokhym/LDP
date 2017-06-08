@@ -11,8 +11,9 @@ dataSet::dataSet(){
     n=1;
 
     // resize col, row
-    dataMtx.resize(n, std::vector<double>(m));
-    dataMtx[0][0]=1.0;
+    dataMtx=new(std::vector< std::vector<double> >);
+    dataMtx->resize(n, std::vector<double>(m));
+    (*dataMtx)[0][0]=1.0;
 }
 
 /* get_dataMtx
@@ -25,7 +26,7 @@ double dataSet::get_dataMtx(int m_in, int n_in){
     if(m_in<0 || m_in>m || n_in<0 || n_in>n)
         return -1;
 
-    return dataMtx[m_in][n_in];
+    return (*dataMtx)[m_in][n_in];
 }
 
 /* set_dataMtx
@@ -38,7 +39,7 @@ int dataSet::set_dataMtx(int m_in, int n_in, double val){
     if(m_in<0 || m_in>this->m || n_in<0 || n_in>this->n)
         return -1;
 
-    dataMtx[m_in][n_in]=val;
+    (*dataMtx)[m_in][n_in]=val;
     return 0;
 }
 
@@ -73,7 +74,7 @@ int dataSet::rekeep_dataMtx(int m_in, int n_in){
         return -1;
 
     // resize automatically retains data
-    dataMtx.resize(m_in, std::vector<double>(n_in));
+    dataMtx->resize(m_in, std::vector<double>(n_in));
     m=m_in;
     n=n_in;
 
@@ -91,7 +92,7 @@ int dataSet::resize_dataMtx(int m_in, int n_in){
         // extra clear here
         for(int i=0; i<m_in; i++){
             for(int j=0; j<n_in; j++){
-                dataMtx[i][j]=0.0;
+                (*dataMtx)[i][j]=0.0;
             }
         }
         return 0;
@@ -100,11 +101,11 @@ int dataSet::resize_dataMtx(int m_in, int n_in){
         return -1;
     
     // resize
-   dataMtx.resize(n_in, std::vector<double>(m_in));
+   (*dataMtx).resize(n_in, std::vector<double>(m_in));
     // clear
      for(int i=0; i<m_in; i++){
         for(int j=0; j<n_in; j++){
-           dataMtx[i][j]=0.0;
+           (* dataMtx)[i][j]=0.0;
         }
     }
      m=m_in;

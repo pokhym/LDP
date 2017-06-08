@@ -27,7 +27,7 @@ class dataSet{
 
     private:
         int m, n;
-        std::vector< std::vector<double> >* dataMtx;
+        std::vector< std::vector<double> > dataMtx;
 };
 
 #endif
