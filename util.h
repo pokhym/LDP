@@ -12,10 +12,11 @@
 
 int parseData(char const* filename, dataSet &data);
 
-int normalizeNeg1toPos1(dataSet &data, std::vector<double> outlier);
+std::pair<std::vector<double>, std::vector<double>> normalizeNeg1toPos1(dataSet &data, std::vector<double> outlier);
 
 std::vector<double> tuplePerturbation(dataSet &data, double epsilon);
 
 int calculateMean(dataSet &data);
 
+int undoNorm(std::pair<std::vector<double>, std::vector<double>> max_min_pair, std::vector<double> &preNorm);
 #endif

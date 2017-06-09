@@ -1,9 +1,9 @@
 #include "util.h"
 #include <random>
+#include <iomanip> // remove later
 
 #define TAB 0x09
 #define LARGENUMBER 9999999999
-#define CR 0xD
 
 using namespace std;
 
@@ -14,6 +14,10 @@ using namespace std;
  * OUTPUTS: 0 on success -1 on failure
  */
 int parseData(char const* filename, dataSet &data){
+    cout<<"initial resize"<<endl;
+    data.rekeep_dataMtx(1000000,100);
+    cout<<"initial resize complete"<<endl;
+
     string line;
     ifstream myfile(filename);
     int prev_data_idx=0; // mark the end of the previous data
@@ -27,7 +31,8 @@ int parseData(char const* filename, dataSet &data){
         // read all lines
         while(getline(myfile, line)){
             row_count++;
-
+            if(row_count%10000==0)
+                cout<<"row count: "<<row_count<<endl;
             for(int i=0; i<(int)line.length(); i++){
                 // check for the delimiter
                 // parse the number from the last idx
@@ -93,17 +98,6 @@ int parseData(char const* filename, dataSet &data){
         }
     }
     
-    for(int i=0; i<data.get_m(); i++){
-        for(int j=0; j<data.get_n(); j++){
-            double asdf=data.get_dataMtx(i,j);
-            cout<<asdf<<" ";
-        }
-        cout<<endl;
-    }
-    cout<<endl;
-    
-    myfile.close();
-    
     return 0;
 }
 
@@ -112,20 +106,21 @@ int parseData(char const* filename, dataSet &data){
  * INPUTS: dataSet, outlier condition
  * OUTPUTS: 0 on success -1 on fail
  */
-int normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
-    if(data.get_m()==1 || data.get_n()==1 || outlier.size()==0)
-        return -1;
+pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
+    //if(data.get_m()==1 || data.get_n()==1 || outlier.size()==0)
+        //return pair<vector<double>, vector<double>>(0);
     
     // store the max values of each for normalization
     vector<double> max(data.get_n(), -LARGENUMBER);
     vector<double> min(data.get_n(), LARGENUMBER);
+    vector<double> scales(data.get_n(), 0.0);
 
     // loop through rows and columns to obtain max
     double max_curr_col=-LARGENUMBER; // maximum in current column
     double min_curr_col=LARGENUMBER; // minimum in current column
-    for(int n=1; n<data.get_n(); n++){
+    for(int n=0; n<data.get_n(); n++){
         for(int m=0; m<data.get_m(); m++){
-            if(data.get_dataMtx(m,n)!=outlier[n]){
+            if(data.get_dataMtx(m,n)!=outlier[0]){ // hard code to 0 outlier
                 if(data.get_dataMtx(m,n)>max_curr_col)
                     max_curr_col=data.get_dataMtx(m,n); // update
 
@@ -136,10 +131,15 @@ int normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
         // save into vector and iterate to next column
         max[n]=max_curr_col;
         min[n]=min_curr_col;
+
+        // reset min_cur_col
+        max_curr_col=-LARGENUMBER;
+        min_curr_col=LARGENUMBER;
     }
+
     
     // normalize per column
-    for(int n=1; n<data.get_n(); n++){
+    for(int n=0; n<data.get_n(); n++){
         for(int m=0; m<data.get_m(); m++){
             // if maximum is 0 (all outliers) don't do anything
             if(max[n]==0){}
@@ -147,26 +147,35 @@ int normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
             // else we need to normalize all nonzero values
             else{
                 // if the data in that m,n is not an outlier normalize
-                if(data.get_dataMtx(m,n)!=outlier[n]){
+                if(data.get_dataMtx(m,n)!=outlier[0]){ // hardcode outlier 0
                     double new_val=data.get_dataMtx(m,n);
                     new_val=(new_val-min[n])/(max[n]-min[n]);
-                    
+
                     // center around -1 to 1
                     new_val=new_val-0.5;
                     new_val=new_val*2.0;
-
+                    
+                    // save scales
+                    //cout<<"old: "<<data.get_dataMtx(m,n)<<" new: "<<new_val<<endl;
+                    scales[n]=scales[n]+new_val;
+                    
                     // save new value into data
-                    data.set_dataMtx(m,n,new_val);
+                    data.set_dataMtx(m+1,n+1,new_val);
                 }
 
                 // else we need to set to 0
                 else{
-                    data.set_dataMtx(m,n,0.0);
+                    data.set_dataMtx(m+1,n+1,0.0);
                 }
             }
         }
     }
-    return 0;
+
+    pair<vector<double>, vector<double>> max_min_pair;
+    max_min_pair.first=max;
+    max_min_pair.second=min;
+    
+    return max_min_pair;
 }
 
 
@@ -184,165 +193,66 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
 
     // uniformally decide which attribute to calculate
     // currently only one so ignore this step
-    int n=2;
+    default_random_engine generator;
+    uniform_int_distribution<int> distribution(0,data.get_n()-1);
+    random_device rdd;
+    mt19937 genn(rdd());
+
+
     
     // loop through all the different entries (not attributes)
     for(int i=0; i<data.get_m(); i++){
         double probability, numerator, denominator;
+        int n=distribution(generator);
         //          ti[Aj]*(exp^(epsilon)-1)+exp^(epsilon)+1
         // Pr[u=1]= ----------------------------------------
         //                     2*exp^(epsilon)+2
         
-        numerator=data.get_dataMtx(i, n)*(exp(epsilon)-1)+exp(epsilon)+1;
-        denominator=(double)exp(epsilon)+2;
-        probability=numerator/denominator;
-        
-        // generate random crap code pulled crom c++reference
-        random_device rd;
-        mt19937 gen(rd());
-        bernoulli_distribution d(probability); // set p
+        if(data.get_dataMtx(i,n)!=0){
+            numerator=data.get_dataMtx(i, n)*(exp(epsilon)-1.0)+exp(epsilon)+1.0;
+            denominator=(double)2.0*exp(epsilon)+2.0;
+            probability=numerator/denominator;
+            
+            if(i<40)
+                cout<<"probability: "<<probability<<" data: "<<data.get_dataMtx(i,n)<<" numerator: "<<numerator<<" denominator: "<<denominator<<endl;
+            
+            // generate random crap code pulled crom c++reference
+            bernoulli_distribution d(probability); // set p
 
-        // grab data values from bernoulli
-        int bernoulli_result=d(gen);
-        
-        // assign values
-        if(bernoulli_result){
-            perturbed[i]=(double)(data.get_n()-1)*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
-        }
-        else{
-            perturbed[i]=(double)-1.0*(data.get_n()-1)*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
+            // grab data values from bernoulli
+            int bernoulli_result=d(genn);
+
+            //cout<<"bernoulli: "<<bernoulli_result<<" column: "<<n<<endl;
+            
+            // assign values
+            if(bernoulli_result){
+                perturbed[i]=(double)(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
+                data.set_dataMtx(i+1, n+1, (double)(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0));
+
+            }
+            else{
+                perturbed[i]=(double)-1.0*(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
+                data.set_dataMtx(i+1, n+1, (double)-1.0*(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0));
+            }
+
+            for(int idx=0; idx<data.get_n(); idx++){
+                if(idx==n){}
+                else{
+                    data.set_dataMtx(i+1, idx+1, 0.0);
+                }
+            }
         }
     }
 
     // update matrix with the new perturbed column
-    data.columnSet(n, perturbed);
+    // data.columnSet(n, perturbed);
     
     return perturbed;
 }
 
-/* parseData
- * DESCRIPTION: Parses data read from a txt file exported from a CSV in excel
- * assumes that the columns are tab separated
- * INPUTS:  First column=names of itmes
- *          All columns thereafter should contain some form of number
- * OUTPUTS: 0 on success and -1 on fail
- */
-
-/*
-int parseData(char const* filename, dataSet &data){
-    string line;
-    ifstream myfile(filename);
-    int col_count=0;
-    int max_col=0;
-    int row_count=0;
-
-    // open file
-    if(myfile.is_open()){
-
-        // read all lines
-        while(getline(myfile, line)){
-            // increment row, column counts
-            row_count++;
-
-            // obtain length of line
-            int str_len=line.size();
-            string temp_str;
-
-            // copy the string into a the temp until hit tab
-            int j=0;
-            for(int i=0; i<str_len; i++){
-                
-                // if we hit a tab process and clear string
-                if(line[i]==TAB || i==str_len-1){
-                    col_count++;
-                    if(col_count>max_col)
-                        max_col=col_count;
-                    // case where we have parsed the name
-                    if(col_count==1){
-                        j=0; i++;
-                        temp_str.clear();
-                    }
-
-                    // else we have a data column
-                    else{
-                        if(temp_str[0]=='F'){
-                            // save into data matrix
-                            data.rekeep_dataMtx(row_count, max_col);
-                            data.set_dataMtx(row_count-1, col_count-1, 0.0);
-                            data.set_dataMtx(row_count-1, 0, row_count);
-                        }
-                        else{
-                            for(int count=0; count<j; count++){                            
-                                // take everything after the dollar sign (case
-                                // price)
-                                if(temp_str[count]=='$'){
-                                    string temp_num_str;
-                                    int count2;
-                                    int count3=0;
-
-                                    // grab only the number part
-                                    for(count2=(count+1); count2<j; count2++){
-                                        temp_num_str[count3]=temp_str[count2];
-                                        count3++;
-                                    }
-
-                                    // convert number part into decimal
-                                    double val;
-                                    int before_decimal, after_decimal, decimal_flag;
-                                    before_decimal=0; after_decimal=0; decimal_flag=0;
-                                    
-                                    for(int count4=0; count4<count3; count4++){
-                                        if(temp_num_str[count4]=='.'){
-                                            count4++;
-                                            decimal_flag=1;
-                                        }
-                                        if(temp_num_str[count4]==' ') // weird error case
-                                            break;
-                                        if(decimal_flag==0)
-                                            before_decimal++;
-                                        if(decimal_flag==1)
-                                            after_decimal++;
-                                    }
-                                    
-                                    // calculate value before decimal
-                                    for(int count4=0; count4<before_decimal; count4++){
-                                        val=val+(double)pow(10,count4)*(temp_num_str[count4]-0x30);
-                                    }
-
-                                    // calculate value after decimal
-                                    for(int count4=1; count4<=after_decimal; count4++){
-                                       val=val+(double)(1.0/pow(10,count4))*
-                                           1.0*(temp_num_str[count4+before_decimal]-0x30);
-
-                                    }
-
-                                    // save into data matrix
-                                    data.rekeep_dataMtx(row_count, max_col);
-                                    data.set_dataMtx(row_count-1, col_count-1, val);
-                                    data.set_dataMtx(row_count-1, 0, row_count);
-
-                                    // reset values
-                                    val=0;
-                                    j=0;
-                                    temp_str.clear();
-                                }
-                            }
-                        }
-                    }
-                }
-                temp_str[j]=line[i]; // copy string
-                j++;
-            }
-            if(col_count>max_col)
-                max_col=col_count;
-            col_count=0; // reset column count
-        }
-
-    myfile.close();
+int undoNorm(std::pair<std::vector<double>, std::vector<double>> max_min_pair, std::vector<double> &preNorm){
+    for(int i=0; i<(int)preNorm.size(); i++){
+        preNorm[i]=((preNorm[i]+1)/2)*(max_min_pair.first[i]-max_min_pair.second[i])+max_min_pair.second[i];
     }
-    // read the number of rows and columns
-    // update m, n in the data set
-    // recall the column=attribute and row=value
     return 0;
 }
-*/

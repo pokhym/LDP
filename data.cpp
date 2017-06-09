@@ -78,20 +78,26 @@ int dataSet::rekeep_dataMtx(int m_in, int n_in){
     // dataMtx.resize(m_in, std::vector<double>(n_in));
  
     // generate new vector
-    std::vector< std::vector<double> > asdf(m_in, std::vector<double>(n_in, 0.0) );
+    if(m_in>m || n_in>n){
+        std::vector< std::vector<double> > asdf(m_in*2, std::vector<double>(n_in*2, 0.0) );
     
-    // copy into new one and reassign
-    for(int i=0; i<m; i++){
-        for(int j=0; j<n; j++){
-            asdf[i][j]=dataMtx[i][j];
+        // copy into new one and reassign
+        for(int i=0; i<m; i++){
+            for(int j=0; j<n; j++){
+                asdf[i][j]=dataMtx[i][j];
+            }
         }
+        dataMtx=asdf;
+
+        m=m_in;
+        n=n_in;
+
+        return 0;
     }
-    dataMtx=asdf;
+    else{
+        return 0;
+    }
 
-    m=m_in;
-    n=n_in;
-
-    return 0;
 }
 
 /* resize_dataMtx
@@ -132,12 +138,13 @@ int dataSet::resize_dataMtx(int m_in, int n_in){
  * OUTPUTS: 0 on success -1 on fail
  */
 int dataSet::columnSet(int n_in, std::vector<double> perturbedColumn){
-    if(perturbedColumn.size()!=(unsigned int)m || n_in<1 || n_in>n)
+    n_in=n_in+1;
+    if(perturbedColumn.size()!=(unsigned int)m|| n_in<=0 || n_in>n)
         return -1;
     
     // loop through all the values
     for(int i=0; i<m; i++){
-        this->set_dataMtx(i, n_in-1, perturbedColumn[i]);
+        this->set_dataMtx(i+1, n_in, perturbedColumn[i]);
     }
     
     return 0;
