@@ -12,7 +12,7 @@ int main(){
     cout<<"begin parsing data"<<endl;
     
     // parse data
-    parseData("../data-Gaussian.csv", *test_data);
+    parseData("../../data-Gaussian.csv", *test_data);
 
     cout<<"parse end"<<endl;
 
