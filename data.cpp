@@ -32,7 +32,8 @@ double dataSet::get_dataMtx(int m_in, int n_in){
 /* set_dataMtx
  * DESCRIPTION: sets a index in the matrix
  * INPUTS: m_in, n_in two indices
- * OUTPUTS: 0 success -1 faile
+ * OUTPUTS: 0 success -1 failed
+ * NOTE: INPUTS ARE 1 INDEXED
  */
 int dataSet::set_dataMtx(int m_in, int n_in, double val){
     // check bounds

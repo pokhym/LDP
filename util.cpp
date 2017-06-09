@@ -156,7 +156,6 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
                     new_val=new_val*2.0;
                     
                     // save scales
-                    //cout<<"old: "<<data.get_dataMtx(m,n)<<" new: "<<new_val<<endl;
                     scales[n]=scales[n]+new_val;
                     
                     // save new value into data
@@ -213,22 +212,16 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
             denominator=(double)2.0*exp(epsilon)+2.0;
             probability=numerator/denominator;
             
-            if(i<40)
-                cout<<"probability: "<<probability<<" data: "<<data.get_dataMtx(i,n)<<" numerator: "<<numerator<<" denominator: "<<denominator<<endl;
-            
             // generate random crap code pulled crom c++reference
             bernoulli_distribution d(probability); // set p
 
             // grab data values from bernoulli
             int bernoulli_result=d(genn);
 
-            //cout<<"bernoulli: "<<bernoulli_result<<" column: "<<n<<endl;
-            
             // assign values
             if(bernoulli_result){
                 perturbed[i]=(double)(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
                 data.set_dataMtx(i+1, n+1, (double)(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0));
-
             }
             else{
                 perturbed[i]=(double)-1.0*(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
@@ -244,12 +237,15 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
         }
     }
 
-    // update matrix with the new perturbed column
-    // data.columnSet(n, perturbed);
-    
     return perturbed;
 }
 
+/* undoNorm
+ * DESCRIPTION: Undos the [-1, 1] normalization
+ * INPUTS: max_min_pair with first=max, second=min, and a preNormalization
+ * vector of values
+ * OUTPUTS: 0 on success -1 on failure
+ */
 int undoNorm(std::pair<std::vector<double>, std::vector<double>> max_min_pair, std::vector<double> &preNorm){
     for(int i=0; i<(int)preNorm.size(); i++){
         preNorm[i]=((preNorm[i]+1)/2)*(max_min_pair.first[i]-max_min_pair.second[i])+max_min_pair.second[i];
