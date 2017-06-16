@@ -10,13 +10,13 @@
 
 
 
-int parseData(char const* filename, dataSet &data);
+int parseData(char const* filename, dataSet &data, int init_m, int init_n);
 
-std::pair<std::vector<double>, std::vector<double>> normalizeNeg1toPos1(dataSet &data);
+std::pair<std::vector<double>, std::vector<double>> normalizeNeg1toPos1(dataSet &data, std::vector<double> outlier);
 
 std::vector<double> tuplePerturbation(dataSet &data, double epsilon);
 
-long nCr(int n, int r);
+unsigned long long nCr(long long n, long long r);
 
 int calculateMean(dataSet &data);
 

@@ -1,23 +1,19 @@
 #include <iostream>
-#include <algorithm>
-#include <vector>
+#include <cmath>
 
 using namespace std;
+
+long long factorial(int i){
+    return tgamma(i+1);
+}
+
+
 int main(){
-    int n, r;
-    cin>>n;
-    cin>>r;
-
-    vector<bool> v(n);
-    fill(v.begin(), v.begin()+r, true);
-
-    do{
-        for(int i=0; i<n; ++i){
-            if(v[i]){
-                cout<<(i+1)<<" ";
-            }
-        }
-        cout<<"\n";
-    } while(prev_permutation(v.begin(), v.end()));
+    srand(time(0));
+    cout<<2%2<<endl;
+    cout<<1%2<<endl;
+    cout<<0%2<<endl;
+    cout<<(double)rand()/RAND_MAX<<endl;
     return 0;
 }
+

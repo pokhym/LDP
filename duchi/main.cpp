@@ -1,27 +1,29 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <string>
 #include "data.h"
 #include "util.h"
 
 using namespace std;
 
 void printall(dataSet &data){
-    int m=data.get_m();
-    int n=data.get_n();
+    //int m=data.get_m();
+    //int n=data.get_n();
 
-    for(int i=0; i<m; i++){
-        for(int j=0; j<n; j++){
-            cout<<setw(8)<<data.get_dataMtx(i,j);
-        }
-        cout<<endl;
-    }
+    //for(int i=0; i<m; i++){
+        //for(int j=0; j<n; j++){
+            //cout<<setw(12)<<data.get_dataMtx(i,j);
+        //}
+        //cout<<endl;
+        //cout<<"next row"<<endl;
+    //}
 }
 
 
 int main(int argc, const char* argv[]){
-    if(argc!=2){
-        cout<<"usage: ./test path_to_data"<<endl;
+    if(argc!=4){
+        cout<<"usage: ./test path_to_data initial_m initial_n"<<endl;
         return 0;
     }
     dataSet *test_data=new(dataSet);
@@ -30,7 +32,9 @@ int main(int argc, const char* argv[]){
     
     // parse data
     int lol;
-    lol=parseData(argv[1], *test_data);
+    cout<<stoi(argv[2])<<endl;
+    cout<<stoi(argv[3])<<endl;
+    lol=parseData(argv[1], *test_data, stoi(argv[2]), stoi(argv[3]));
     if(lol==-1){
         cout<<"failed to parse data you might want to check the path"<<endl;
         return -1;
@@ -63,15 +67,18 @@ int main(int argc, const char* argv[]){
  
     // data normalization
     cout<<"normalizing columns"<<endl;
-    pair<vector<double>, vector<double>> scales=normalizeNeg1toPos1(*test_data);
+    vector<double> outlier={0};
+    pair<vector<double>, vector<double>> scales=normalizeNeg1toPos1(*test_data, outlier);
+
+    cout<<"done normalizing"<<endl;
 
     printall(*test_data);
+    cout<<endl;
 
     // perturb data
     vector<double> perturb_scales=tuplePerturbation(*test_data,0.5);
     printall(*test_data);
     
-    /*
     // calculate estimated average
     vector<double> avg(test_data->get_n(), 0.0);
     vector<int> counters(test_data->get_n(), 0);
@@ -90,13 +97,13 @@ int main(int argc, const char* argv[]){
     }   
     
     // undo normalizaion
-    undoNorm(scales, avg);
+    // undoNorm(scales, avg);
     
     // print real averages and estimated averages
     for(int i=0; i<test_data->get_n(); i++){
          cout<<"avg_real: "<<avg_real[i]<<setw(10)<<" avg_est: "<<avg[i]<<endl;   
     }
-    */
+    
 
     delete test_data;
     return 0;

@@ -15,10 +15,13 @@ using namespace std;
  * INPUTS: filename, dataset
  * OUTPUTS: 0 on success -1 on failure
  */
-int parseData(char const* filename, dataSet &data){
-    //cout<<"initial resize"<<endl;
-    //data.rekeep_dataMtx(1000000,100);
-    //cout<<"initial resize complete"<<endl;
+int parseData(char const* filename, dataSet &data, int init_m, int init_n){
+    if(init_m<1 || init_n<1 || filename==NULL)
+        return -1;
+
+    cout<<"initial resize"<<endl;
+    data.rekeep_dataMtx(init_m,init_n);
+    cout<<"initial resize complete"<<endl;
 
     string line;
     ifstream myfile(filename);
@@ -107,10 +110,10 @@ int parseData(char const* filename, dataSet &data){
 
 /* normalizeNeg1toPos1
  * DESCRIPTION: normalizes each column of the input data set -1 to 1
- * INPUTS: dataSet
+ * INPUTS: dataSet, outlier condition
  * OUTPUTS: 0 on success -1 on fail
  */
-pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data){
+pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
     //if(data.get_m()==1 || data.get_n()==1 || outlier.size()==0)
         //return pair<vector<double>, vector<double>>(0);
     
@@ -124,11 +127,13 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data){
     double min_curr_col=LARGENUMBER; // minimum in current column
     for(int n=0; n<data.get_n(); n++){
         for(int m=0; m<data.get_m(); m++){
-            if(data.get_dataMtx(m,n)>max_curr_col)
-                max_curr_col=data.get_dataMtx(m,n); // update
+            if(data.get_dataMtx(m,n)!=outlier[0]){ // hard code to 0 outlier
+                if(data.get_dataMtx(m,n)>max_curr_col)
+                    max_curr_col=data.get_dataMtx(m,n); // update
 
-            if(data.get_dataMtx(m,n)<min_curr_col)
-                min_curr_col=data.get_dataMtx(m,n); // update
+                if(data.get_dataMtx(m,n)<min_curr_col)
+                    min_curr_col=data.get_dataMtx(m,n); // update
+            }
         }
         // save into vector and iterate to next column
         max[n]=max_curr_col;
@@ -143,23 +148,31 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data){
     // normalize per column
     for(int n=0; n<data.get_n(); n++){
         for(int m=0; m<data.get_m(); m++){
-            // if maximum is 0 (no data) don't do anything
+            // if maximum is 0 (all outliers) don't do anything
             if(max[n]==0){}
 
-            // else we need to normalize
+            // else we need to normalize all nonzero values
             else{
-                double new_val=data.get_dataMtx(m,n);
-                new_val=(new_val-min[n])/(max[n]-min[n]);
+                // if the data in that m,n is not an outlier normalize
+                if(data.get_dataMtx(m,n)!=outlier[0]){ // hardcode outlier 0
+                    double new_val=data.get_dataMtx(m,n);
+                    new_val=(new_val-min[n])/(max[n]-min[n]);
 
-                // center around -1 to 1
-                new_val=new_val-0.5;
-                new_val=new_val*2.0;
-                
-                // save scales
-                scales[n]=scales[n]+new_val;
-                
-                // save new value into data
-                data.set_dataMtx(m+1,n+1,new_val);
+                    // center around -1 to 1
+                    new_val=new_val-0.5;
+                    new_val=new_val*2.0;
+                    
+                    // save scales
+                    scales[n]=scales[n]+new_val;
+                    
+                    // save new value into data
+                    data.set_dataMtx(m+1,n+1,new_val);
+                }
+
+                // else we need to set to 0
+                else{
+                    data.set_dataMtx(m+1,n+1,0.0);
+                }
             }
         }
     }
@@ -171,7 +184,12 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data){
     return max_min_pair;
 }
 
-long factorial(long i){
+/* factorial
+ * DESCRIPTION: Calcualtes the factorial of the input with the tgamma function
+ * INPUTS: long long representing the integer factorial we want to compute
+ * OUTPUTS: the long long result of i!
+ */
+long long factorial(long long i){
     if(i==1)
         return 1;
     else
@@ -183,11 +201,11 @@ long factorial(long i){
  * INPUTS: n, r as integers
  * OUTPUTS: number of combinations
  */
-long nCr(int n, int r){
-    // TODO: NEEDS MEMOIZATION
-    long comb;
-    comb=factorial(n)/(factorial(r)*factorial(n-r));   
-    return comb;
+unsigned long long nCr(long long n, long long r){
+    // use the gamma function to efficiently calculate the factorial funtion
+    cout<<"nCr func: "<< tgamma(n+1)/(tgamma(r+1)*tgamma(n-r+1))<<endl;
+
+    return tgamma(n+1)/(tgamma(r+1)*tgamma(n-r+1));
 }
 
 /* tuplePerturbation
@@ -201,11 +219,11 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
         return vector<double>(-1);
     
     vector<double> perturbed(data.get_m(), 0.0); // store result here
-    double probability;
-    double numerator=exp(epsilon);
-    double denominator=(exp(epsilon)+1);
+    // double probability;
+    // double numerator=exp(epsilon);
+    // double denominator=(exp(epsilon)+1);
     int d=data.get_n(); // number of attributes
-    probability=numerator/denominator;
+    // probability=numerator/denominator;
 
     // initialize rand
     srand(time(0));
@@ -232,8 +250,11 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
             //           1.0             1.0 always sums to 1 so only need to use one of the lines
 
             double prob_v=0.5+0.5*data.get_dataMtx(i, Aj);
-            double prob_vopposite=(double)Aj/RAND_MAX;
-            if(prob_v>prob_vopposite){
+            default_random_engine gen;
+            bernoulli_distribution distty(prob_v);
+
+            double prob_vopposite=(double)rand()/(double)(RAND_MAX+1.0);
+            if(distty(gen)){
                 v[Aj]=1;
             }
             else{
@@ -262,26 +283,39 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
         //   | -------------------------------- , otherwise
         //   | nCr(d-1, d/2)*(exp(epsilon) - 1)
         //   --       
-
         // First calculate B
-        double Cd;
-        if(d%2==0){ // even case
-            Cd=pow(2, d-1)-0.5*nCr(d, d/2);
-        }
-        else{ // odd case
-            Cd=pow(2, d-1);
-        }
-        double B;
-        if(d%2==0){ // even case
-            double B_num=(double)pow(2, d)+Cd*(exp(epsilon-1));
-            double B_denom=(double)nCr(d-1, d/2)*exp(epsilon-1);
-            B=B_num/B_denom;
+        long double B=0.0;
+        if(d%2==0){
+
+            // 2^d     + Cd                *                                             exp(epsilon)-1
+            B=(pow(2, d)+(pow(2, d-1)-0.5*(tgamma(d+1)/(tgamma(d/2+1)*tgamma(d-d/2+1))))*(exp(epsilon)-1))/
+              ((tgamma(d-1+1)/(tgamma((d-1)/2+1)*tgamma(d-1-(d-1)/2+1)))*(exp(epsilon)-1));
+               // ncR(d-1, d/2)                   *                      exp(epsilon)-1
         }
         else{
-            double B_num=(double)pow(2, d)+Cd*(exp(epsilon-1));
-            double B_denom=(double)nCr(d-1, (d-1)/2)*exp(epsilon-1);
-            B=B_num/B_denom;
+            B=(pow(2, d)+pow(2, d-1)*(exp(epsilon)-1))/
+              ((tgamma(d-1+1)/(tgamma(d/2+1)*tgamma(d-1-d/2+1)))*(exp(epsilon)-1));
         }
+        /*
+         *double Cd;
+         *if(d%2==0){ // even case
+         *    Cd=pow(2, d-1)-0.5*nCr(d, d/2);
+         *}
+         *else{ // odd case
+         *    Cd=pow(2, d-1);
+         *}
+         *double B;
+         *if(d%2==0){ // even case
+         *    double B_num=(double)pow(2, d)+Cd*(exp(epsilon-1));
+         *    double B_denom=(double)nCr(d-1, d/2)*exp(epsilon-1);
+         *    B=B_num/B_denom;
+         *}
+         *else{
+         *    double B_num=(double)pow(2, d)+Cd*(exp(epsilon-1));
+         *    double B_denom=(double)nCr(d-1, (d-1)/2)*exp(epsilon-1);
+         *    B=B_num/B_denom;
+         *}
+         */
 
         /////////////////////////////// STEP 3
         // Then we need to randomly generate either T+ or T- for each row
@@ -291,9 +325,9 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
         //         exp(epsilon)+1
         double probability_bernoulli=exp(epsilon)/(exp(epsilon)+1);
         default_random_engine generator;
-        bernoulli_distribution d(probability_bernoulli);
+        bernoulli_distribution dist(probability_bernoulli);
         // set per attribute in each user
-        if(d(generator)){ // T+ case
+        if(dist(generator)){ // T+ case
             for(int j=0; j<data.get_n(); j++){
                 // v[j]*ti[j]>0
                 // if v[j]==-1 then ti[j]=-B
@@ -305,14 +339,25 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
             }
         }
         else{ // T- case
+            default_random_engine fifty_fifty;
+            bernoulli_distribution ff(0.5);
+            int guarenteed_negative=rand()%data.get_n();
             for(int j=0; j<data.get_n(); j++){
                 // v[j]*ti[j]<=0
                 // if v[j]==-1 then ti[j]=B
                 // othewise if v[j]==1 then ti[j]==-B
-                if(v[j]==-1)
-                    data.set_dataMtx(i+1, j+1, B);
-                else
-                    data.set_dataMtx(i+1, j+1, -B);
+                if(guarenteed_negative==j){
+                    if(v[j]==-1)
+                        data.set_dataMtx(i+1, j+1, B);
+                    else
+                        data.set_dataMtx(i+1, j+1, -B);
+                }
+                else{
+                    if(ff(fifty_fifty))
+                        data.set_dataMtx(i+1, j+1, B);
+                    else
+                        data.set_dataMtx(i+1, j+1, -B);
+                }
             }
         }
 
