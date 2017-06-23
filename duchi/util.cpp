@@ -338,6 +338,7 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
             // we have now obtained the correct signs of B in the current user row
             // set the values accordingly
             double sum=0;
+            
             for(int p=0; p<d; p++){
                 data.set_dataMtx(i+1, p+1, B*B_flags[p]);
                 sum=sum+(double)v[p]*data.get_dataMtx(i, p);
