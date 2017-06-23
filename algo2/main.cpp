@@ -8,11 +8,11 @@ using namespace std;
 
 int main(){
     dataSet *test_data=new(dataSet);
-    
+
     cout<<"begin parsing data"<<endl;
-    
+
     // parse data
-    parseData("../../data-Gaussian.csv", *test_data);
+    parseData("data.txt", *test_data);
 
     cout<<"parse end"<<endl;
 
@@ -36,7 +36,7 @@ int main(){
     for(int i=0; i<test_data->get_n(); i++){
         avg_real[i]=avg_real[i]/asdf[i];
     }
- 
+
     // data normalization
     cout<<"normalizing columns"<<endl;
     vector<double> outlier={0};
@@ -44,7 +44,7 @@ int main(){
 
     // perturb data
     vector<double> perturb_scales=tuplePerturbation(*test_data,0.5);
-    
+
     // calculate estimated average
     vector<double> avg(test_data->get_n(), 0.0);
     vector<int> counters(test_data->get_n(), 0);
@@ -60,15 +60,18 @@ int main(){
 
     for(int i=0; i<test_data->get_n(); i++){
         avg[i]=avg[i]/counters[i];
-    }   
-    
+    }
+
     // undo normalizaion
     undoNorm(scales, avg);
-    
+
     // print real averages and estimated averages
+    double rel_error=0.0;
     for(int i=0; i<test_data->get_n(); i++){
-         cout<<"avg_real: "<<avg_real[i]<<setw(10)<<" avg_est: "<<avg[i]<<endl;   
+         cout<<"avg_real: "<<avg_real[i]<<setw(10)<<" avg_est: "<<avg[i]<<endl;
+         rel_error+=abs((avg[i]-avg_real[i])/avg_real[i]);
     }
+    cout<<"percent releative error: "<<rel_error/test_data->get_n()<<endl;
 
     delete test_data;
     return 0;

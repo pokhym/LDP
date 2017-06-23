@@ -100,10 +100,12 @@ int main(int argc, const char* argv[]){
     undoNorm(scales, avg);
 
     // print real averages and estimated averages
+    double rel_error=0.0;
     for(int i=0; i<test_data->get_n(); i++){
          cout<<"avg_real: "<<avg_real[i]<<setw(10)<<" avg_est: "<<avg[i]<<endl;
+         rel_error+=abs((avg[i]-avg_real[i])/avg_real[i]);
     }
-
+    cout<<"percent releative error: "<<rel_error/test_data->get_n()<<endl;
 
     delete test_data;
     return 0;

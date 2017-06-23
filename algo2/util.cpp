@@ -25,7 +25,7 @@ int parseData(char const* filename, dataSet &data){
     int col_count=0;
     int max_col=0;
     double val=0;
-    
+
     // open file
     if(myfile.is_open()){
         // read all lines
@@ -49,7 +49,7 @@ int parseData(char const* filename, dataSet &data){
 
                     // weird case
                     if(prev_data_idx!=0){prev_data_idx++;}
-                    
+
                     // enter null terminated
                     char temp_num_char[i-prev_data_idx+1];
                     temp_num_char[i-prev_data_idx]='\0';
@@ -61,7 +61,7 @@ int parseData(char const* filename, dataSet &data){
 
                     // update next string beginning position
                     prev_data_idx=i;
-                    
+
                     // convert into a string so we can use stod
                     string temp_num_string=temp_num_char;
                     val=stod(temp_num_string);
@@ -97,7 +97,7 @@ int parseData(char const* filename, dataSet &data){
             col_count=0;
         }
     }
-    
+
     return 0;
 }
 
@@ -109,7 +109,7 @@ int parseData(char const* filename, dataSet &data){
 pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
     //if(data.get_m()==1 || data.get_n()==1 || outlier.size()==0)
         //return pair<vector<double>, vector<double>>(0);
-    
+
     // store the max values of each for normalization
     vector<double> max(data.get_n(), -LARGENUMBER);
     vector<double> min(data.get_n(), LARGENUMBER);
@@ -137,7 +137,7 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
         min_curr_col=LARGENUMBER;
     }
 
-    
+
     // normalize per column
     for(int n=0; n<data.get_n(); n++){
         for(int m=0; m<data.get_m(); m++){
@@ -154,10 +154,10 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
                     // center around -1 to 1
                     new_val=new_val-0.5;
                     new_val=new_val*2.0;
-                    
+
                     // save scales
                     scales[n]=scales[n]+new_val;
-                    
+
                     // save new value into data
                     data.set_dataMtx(m+1,n+1,new_val);
                 }
@@ -173,7 +173,7 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
     pair<vector<double>, vector<double>> max_min_pair;
     max_min_pair.first=max;
     max_min_pair.second=min;
-    
+
     return max_min_pair;
 }
 
@@ -187,7 +187,7 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
 vector<double> tuplePerturbation(dataSet &data, double epsilon){
     if(data.get_n()==0 || data.get_m()==0)
         return vector<double>(-1);
-    
+
     vector<double> perturbed(data.get_m(), 0.0); // store result here
 
     // uniformally decide which attribute to calculate
@@ -198,7 +198,7 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
     mt19937 genn(rdd());
 
 
-    
+
     // loop through all the different entries (not attributes)
     for(int i=0; i<data.get_m(); i++){
         double probability, numerator, denominator;
@@ -206,12 +206,12 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
         //          ti[Aj]*(exp^(epsilon)-1)+exp^(epsilon)+1
         // Pr[u=1]= ----------------------------------------
         //                     2*exp^(epsilon)+2
-        
+
         if(data.get_dataMtx(i,n)!=0){
             numerator=data.get_dataMtx(i, n)*(exp(epsilon)-1.0)+exp(epsilon)+1.0;
             denominator=(double)2.0*exp(epsilon)+2.0;
             probability=numerator/denominator;
-            
+
             // generate random crap code pulled crom c++reference
             bernoulli_distribution d(probability); // set p
 
@@ -220,12 +220,12 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
 
             // assign values
             if(bernoulli_result){
-                perturbed[i]=(double)(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
-                data.set_dataMtx(i+1, n+1, (double)(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0));
+                perturbed[i]=(double)(exp(epsilon)+1.0)/(exp(epsilon)-1.0);//(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
+                data.set_dataMtx(i+1, n+1, (double)(exp(epsilon)+1.0)/(exp(epsilon)-1.0));//(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0));
             }
             else{
-                perturbed[i]=(double)-1.0*(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
-                data.set_dataMtx(i+1, n+1, (double)-1.0*(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0));
+                perturbed[i]=(double)-1.0*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);//-1.0*(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0);
+                data.set_dataMtx(i+1, n+1, (double)-1.0*(exp(epsilon)+1.0)/(exp(epsilon)-1.0));//(double)-1.0*(data.get_n())*(exp(epsilon)+1.0)/(exp(epsilon)-1.0));
             }
 
             for(int idx=0; idx<data.get_n(); idx++){
