@@ -8,16 +8,16 @@
 using namespace std;
 
 void printall(dataSet &data){
-    //int m=data.get_m();
-    //int n=data.get_n();
-
-    //for(int i=0; i<m; i++){
-        //for(int j=0; j<n; j++){
-            //cout<<setw(12)<<data.get_dataMtx(i,j);
-        //}
-        //cout<<endl;
-        //cout<<"next row"<<endl;
-    //}
+    // int m=data.get_m();
+    // int n=data.get_n();
+    //
+    // for(int i=0; i<m; i++){
+    //     for(int j=0; j<n; j++){
+    //         cout<<setw(12)<<data.get_dataMtx(i,j);
+    //     }
+    //     cout<<endl;
+    //     cout<<"next row"<<endl;
+    // }
 }
 
 
@@ -27,9 +27,9 @@ int main(int argc, const char* argv[]){
         return 0;
     }
     dataSet *test_data=new(dataSet);
-    
+
     cout<<"begin parsing data"<<endl;
-    
+
     // parse data
     int lol;
     cout<<stoi(argv[2])<<endl;
@@ -64,7 +64,7 @@ int main(int argc, const char* argv[]){
     for(int i=0; i<test_data->get_n(); i++){
         avg_real[i]=avg_real[i]/asdf[i];
     }
- 
+
     // data normalization
     cout<<"normalizing columns"<<endl;
     vector<double> outlier={0};
@@ -78,7 +78,7 @@ int main(int argc, const char* argv[]){
     // perturb data
     vector<double> perturb_scales=tuplePerturbation(*test_data,0.5);
     printall(*test_data);
-    
+
     // calculate estimated average
     vector<double> avg(test_data->get_n(), 0.0);
     vector<int> counters(test_data->get_n(), 0);
@@ -94,16 +94,16 @@ int main(int argc, const char* argv[]){
 
     for(int i=0; i<test_data->get_n(); i++){
         avg[i]=avg[i]/counters[i];
-    }   
-    
+    }
+
     // undo normalizaion
-    // undoNorm(scales, avg);
-    
+    undoNorm(scales, avg);
+
     // print real averages and estimated averages
     for(int i=0; i<test_data->get_n(); i++){
-         cout<<"avg_real: "<<avg_real[i]<<setw(10)<<" avg_est: "<<avg[i]<<endl;   
+         cout<<"avg_real: "<<avg_real[i]<<setw(10)<<" avg_est: "<<avg[i]<<endl;
     }
-    
+
 
     delete test_data;
     return 0;

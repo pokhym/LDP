@@ -12,10 +12,10 @@ int main()
   myfile.open("data.txt");
 
   const int rows=1000000;
-  const int cols=10;
+  const int cols=100;
 
   std::default_random_engine generator;
-  std::normal_distribution<double> distribution(50.0,5.0);
+  std::normal_distribution<double> distribution(58.0,5.0);
 
   for (int i=0; i<rows; ++i) {
       for(int j=0; j<cols; ++j){
@@ -30,7 +30,7 @@ int main()
       }
       myfile<<std::endl;
   }
-    
+
   myfile.close();
 
   return 0;

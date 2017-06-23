@@ -30,7 +30,7 @@ int parseData(char const* filename, dataSet &data, int init_m, int init_n){
     int col_count=0;
     int max_col=0;
     double val=0;
-    
+
     // open file
     if(myfile.is_open()){
         // read all lines
@@ -54,7 +54,7 @@ int parseData(char const* filename, dataSet &data, int init_m, int init_n){
 
                     // weird case
                     if(prev_data_idx!=0){prev_data_idx++;}
-                    
+
                     // enter null terminated
                     char temp_num_char[i-prev_data_idx+1];
                     temp_num_char[i-prev_data_idx]='\0';
@@ -66,7 +66,7 @@ int parseData(char const* filename, dataSet &data, int init_m, int init_n){
 
                     // update next string beginning position
                     prev_data_idx=i;
-                    
+
                     // convert into a string so we can use stod
                     string temp_num_string=temp_num_char;
                     val=stod(temp_num_string);
@@ -104,7 +104,7 @@ int parseData(char const* filename, dataSet &data, int init_m, int init_n){
     }
     else
         return -1;
-    
+
     return 0;
 }
 
@@ -116,7 +116,7 @@ int parseData(char const* filename, dataSet &data, int init_m, int init_n){
 pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<double> outlier){
     //if(data.get_m()==1 || data.get_n()==1 || outlier.size()==0)
         //return pair<vector<double>, vector<double>>(0);
-    
+
     // store the max values of each for normalization
     vector<double> max(data.get_n(), -LARGENUMBER);
     vector<double> min(data.get_n(), LARGENUMBER);
@@ -144,7 +144,7 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
         min_curr_col=LARGENUMBER;
     }
 
-    
+
     // normalize per column
     for(int n=0; n<data.get_n(); n++){
         for(int m=0; m<data.get_m(); m++){
@@ -161,10 +161,10 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
                     // center around -1 to 1
                     new_val=new_val-0.5;
                     new_val=new_val*2.0;
-                    
+
                     // save scales
                     scales[n]=scales[n]+new_val;
-                    
+
                     // save new value into data
                     data.set_dataMtx(m+1,n+1,new_val);
                 }
@@ -180,7 +180,7 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
     pair<vector<double>, vector<double>> max_min_pair;
     max_min_pair.first=max;
     max_min_pair.second=min;
-    
+
     return max_min_pair;
 }
 
@@ -217,16 +217,43 @@ unsigned long long nCr(long long n, long long r){
 vector<double> tuplePerturbation(dataSet &data, double epsilon){
     if(data.get_n()==0 || data.get_m()==0 || epsilon<=0)
         return vector<double>(-1);
-    
+
     vector<double> perturbed(data.get_m(), 0.0); // store result here
-    // double probability;
-    // double numerator=exp(epsilon);
-    // double denominator=(exp(epsilon)+1);
     int d=data.get_n(); // number of attributes
-    // probability=numerator/denominator;
 
     // initialize rand
     srand(time(0));
+
+    // initialize the random engine for the rest of the distributions
+    default_random_engine gen;
+
+    //    --
+    //    | 2^(d-1), if d is odd
+    // Cd=|
+    //    | 2^(d-1)- 1/2 * nCr(d, d/2), otherwise
+    //    --
+    //   --
+    //   |      2^d + Cd*(exp(epsilon) - 1)
+    //   | ------------------------------------ , if d is odd
+    //   | nCr(d-1, (d-1)/2)*(exp(epsilon) - 1)
+    // B=|
+    //   |    2^d + Cd*(exp(epsilon) - 1)
+    //   | -------------------------------- , otherwise
+    //   | nCr(d-1, d/2)*(exp(epsilon) - 1)
+    //   --
+    // First calculate B
+    long double B=0.0;
+    if(d%2==0){
+
+        // 2^d     + Cd                *                                             exp(epsilon)-1
+        B=(pow(2, d)+(pow(2, d-1)-0.5*(tgamma(d+1)/(tgamma(d/2+1)*tgamma(d-d/2+1))))*(exp(epsilon)-1))/
+          ((tgamma(d-1+1)/(tgamma((d-1)/2+1)*tgamma(d-1-(d-1)/2+1)))*(exp(epsilon)-1));
+           // ncR(d-1, d/2)                   *                      exp(epsilon)-1
+    }
+    else{
+        B=(pow(2, d)+pow(2, d-1)*(exp(epsilon)-1))/
+          ((tgamma(d-1+1)/(tgamma(d/2+1)*tgamma(d-1-d/2+1)))*(exp(epsilon)-1));
+    }
 
     // for each row
     for(int i=0; i<data.get_m(); i++){
@@ -235,133 +262,139 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
         // for each column generate v
         for(int j=0; j<data.get_n(); j++){
             // grab Aj a random attribute
-            double Aj=rand()%d; // needs to have a max number of d-1 attributes (0 indexed)
+            // double Aj=rand()%d; // needs to have a max number of d-1 attributes (0 indexed)
 
             // generate a v vector containing {1,-1} for each Aj with following prob dist
-            // NOTE: Aj=j in this case 
+            // NOTE: Aj=j in this case
             //             --
             //             | 1/2 + 1/2 * ti[Aj], if x=1
             // Pr[v[Aj]=x]=|
             //             | 1/2 - 1/2 * ti[Aj], if x=-1
             //             --
-            // 0.5+0.5*1=.75 0.5+0.5*.75=.875 
+            // 0.5+0.5*1=.75 0.5+0.5*.75=.875
             // 0.5-0.5*1=.25 0.5-0.5*.75=.125
             //-------------------------------
             //           1.0             1.0 always sums to 1 so only need to use one of the lines
 
-            double prob_v=0.5+0.5*data.get_dataMtx(i, Aj);
-            default_random_engine gen;
-            bernoulli_distribution distty(prob_v);
+            double prob_v=0.5+0.5*data.get_dataMtx(i, j);
+            bernoulli_distribution distty(prob_v); // use the result of 1 to mark as 1 else -1
 
-            double prob_vopposite=(double)rand()/(double)(RAND_MAX+1.0);
             if(distty(gen)){
-                v[Aj]=1;
+                v[j]=1;
             }
             else{
-                v[Aj]=-1;
+                v[j]=-1;
             }
         }
 
         //////////////////////////////// STEP 2
-        // Time to generate T+ and T-
+        // Time to choose whether we want to use T+ or T-
+        bernoulli_distribution dist(exp(epsilon)/(exp(epsilon)+1));
+        int T_plus_minus=dist(gen);
+
+        // Now generate T+ and T-
         // T+ is defined as t* element {B-, B+}^d where t* * v>0
         // T- is defined as t* element {B-, B+}^d where t* * v<=0
         // For example from the paper if ti=< 1, 1 >
         // T+ = { <B, B> }
         // T- = { <-B, -B>, <-B, B>, <B, -B> }
-        //    --
-        //    | 2^(d-1), if d is odd
-        // Cd=|
-        //    | 2^(d-1)- 1/2 * nCr(d, d/2), otherwise
-        //    --
-        //   --
-        //   |      2^d + Cd*(exp(epsilon) - 1)
-        //   | ------------------------------------ , if d is odd
-        //   | nCr(d-1, (d-1)/2)*(exp(epsilon) - 1)
-        // B=|
-        //   |    2^d + Cd*(exp(epsilon) - 1)
-        //   | -------------------------------- , otherwise
-        //   | nCr(d-1, d/2)*(exp(epsilon) - 1)
-        //   --       
-        // First calculate B
-        long double B=0.0;
-        if(d%2==0){
+        // Instead of choosing one combination from many we just generate one at random
+        // For example in the case of T+ the idea is to generate the indexes we want to be positive
+        // then fill in the gaps with the rest as negative
 
-            // 2^d     + Cd                *                                             exp(epsilon)-1
-            B=(pow(2, d)+(pow(2, d-1)-0.5*(tgamma(d+1)/(tgamma(d/2+1)*tgamma(d-d/2+1))))*(exp(epsilon)-1))/
-              ((tgamma(d-1+1)/(tgamma((d-1)/2+1)*tgamma(d-1-(d-1)/2+1)))*(exp(epsilon)-1));
-               // ncR(d-1, d/2)                   *                      exp(epsilon)-1
+        // Case T+: There must be more than d/2 positive B's
+        if(T_plus_minus){
+            int num_positive=rand()%(d/2)+d/2+1; // if d=20 we want to have between 11-20 B
+                                                 // achieve by doing d/2+1=11 and rand()%(d/2)=0-9
+
+            vector<double> B_flags(d, 0.0);
+            // Set the positive values first
+            // there are 2 cases accounting for v=-1 and v=1
+            int count=0;
+            while(count!=num_positive){
+                int idx=rand()%d;
+                if(v[idx]==1 && B_flags[idx]==0.0){ // set 1 for positive vars
+                    B_flags[idx]=1;
+                    count++;
+                }
+                else if(v[idx]==-1 && B_flags[idx]==0.0){ // v=-1 and we need to set -1
+                    B_flags[idx]=-1;
+                    count++;
+                }
+            }
+
+            // we can now set the negative values
+            for(int p=0; p<(int)B_flags.size(); p++){
+                if(B_flags[p]==0){
+                    if(v[p]==1){
+                        B_flags[p]=-1;
+                    }
+                    else{
+                        B_flags[p]=1;
+                    }
+                }
+            }
+
+            // we have now obtained the correct signs of B in the current user row
+            // set the values accordingly
+            double sum=0;
+            for(int p=0; p<d; p++){
+                data.set_dataMtx(i+1, p+1, B*B_flags[p]);
+                sum=sum+(double)v[p]*data.get_dataMtx(i, p);
+            }
+
+            if(sum<=0){
+                cout<<"T+ i "<<i<<" sum "<<sum<<" "<<B_flags.size()<<endl;
+                for(int i=0; i<(int)B_flags.size(); i++){
+                    cout<<B_flags[i]<<" "<<v[i]<<" "<<" ***** "<<B_flags[i]*(double)v[i]<<" **** ";
+                }
+                cout<<endl; cout<<endl;
+            }
         }
+
+        // Case T-: There must be less than or equal to d/2 negative B's
         else{
-            B=(pow(2, d)+pow(2, d-1)*(exp(epsilon)-1))/
-              ((tgamma(d-1+1)/(tgamma(d/2+1)*tgamma(d-1-d/2+1)))*(exp(epsilon)-1));
-        }
-        /*
-         *double Cd;
-         *if(d%2==0){ // even case
-         *    Cd=pow(2, d-1)-0.5*nCr(d, d/2);
-         *}
-         *else{ // odd case
-         *    Cd=pow(2, d-1);
-         *}
-         *double B;
-         *if(d%2==0){ // even case
-         *    double B_num=(double)pow(2, d)+Cd*(exp(epsilon-1));
-         *    double B_denom=(double)nCr(d-1, d/2)*exp(epsilon-1);
-         *    B=B_num/B_denom;
-         *}
-         *else{
-         *    double B_num=(double)pow(2, d)+Cd*(exp(epsilon-1));
-         *    double B_denom=(double)nCr(d-1, (d-1)/2)*exp(epsilon-1);
-         *    B=B_num/B_denom;
-         *}
-         */
-
-        /////////////////////////////// STEP 3
-        // Then we need to randomly generate either T+ or T- for each row
-        // per user using a bernoulli variable with probability equal to the following
-        //          exp(epsilon)
-        // Pr[u=1]=--------------
-        //         exp(epsilon)+1
-        double probability_bernoulli=exp(epsilon)/(exp(epsilon)+1);
-        default_random_engine generator;
-        bernoulli_distribution dist(probability_bernoulli);
-        // set per attribute in each user
-        if(dist(generator)){ // T+ case
-            for(int j=0; j<data.get_n(); j++){
-                // v[j]*ti[j]>0
-                // if v[j]==-1 then ti[j]=-B
-                // otherwise w[j]==1 then ti[j]=B
-                if(v[j]==-1)
-                    data.set_dataMtx(i+1,j+1, -B);
-                else
-                    data.set_dataMtx(i+1, j+1, B);
-            }
-        }
-        else{ // T- case
-            default_random_engine fifty_fifty;
-            bernoulli_distribution ff(0.5);
-            int guarenteed_negative=rand()%data.get_n();
-            for(int j=0; j<data.get_n(); j++){
-                // v[j]*ti[j]<=0
-                // if v[j]==-1 then ti[j]=B
-                // othewise if v[j]==1 then ti[j]==-B
-                if(guarenteed_negative==j){
-                    if(v[j]==-1)
-                        data.set_dataMtx(i+1, j+1, B);
-                    else
-                        data.set_dataMtx(i+1, j+1, -B);
+            int num_positive=rand()%(d/2+1); // if d=20 we want to have between 0-10 B
+                                             // achieve by doing rand()%(d/2+1)=0-10
+            vector<double> B_flags(d, 0.0);
+            // Set the positive values first
+            // there are 2 cases accounting for v=-1 and v=1
+            int count=0;
+            while(count!=num_positive){
+                int idx=rand()%d;
+                if(v[idx]==1 && B_flags[idx]==0.0){ // set 1 for positive vars
+                    B_flags[idx]=1;
+                    count++;
                 }
-                else{
-                    if(ff(fifty_fifty))
-                        data.set_dataMtx(i+1, j+1, B);
-                    else
-                        data.set_dataMtx(i+1, j+1, -B);
+                else if(v[idx]==-1 && B_flags[idx]==0.0){ // v=-1 and we need to set -1
+                    B_flags[idx]=-1;
+                    count++;
                 }
             }
+
+            // we can now set the negative values
+            for(int p=0; p<(int)B_flags.size(); p++){
+                if(B_flags[p]==0){
+                    if(v[p]==1){
+                        B_flags[p]=-1;
+                    }
+                    else{
+                        B_flags[p]=1;
+                    }
+                }
+            }
+
+            // we have now obtained the correct signs of B in the current user row
+            // set the values accordingly
+            double sum=0;
+            for(int p=0; p<d; p++){
+                data.set_dataMtx(i+1, p+1, B*B_flags[p]);
+                sum=sum+(double)v[p]*data.get_dataMtx(i, p);
+            }
+            if(sum>0){
+                cout<<"T- i "<<i<<" sum "<<sum<<endl;
+            }
         }
-
-
 
     } // end each row
 
