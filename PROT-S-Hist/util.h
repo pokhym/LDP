@@ -14,13 +14,24 @@ int parseData(char const* filename, dataSet &data, int init_m, int init_n);
 
 std::pair<std::vector<double>, std::vector<double>> normalizeNeg1toPos1(dataSet &data, std::vector<double> outlier);
 
-std::vector<double> e_basic_normalizer(std::vector<double> x, double epsilon);
+std::vector<int> code(int input);
 
-std::vector<double> tuplePerturbation(dataSet &data, double epsilon);
+double decode(std::vector<int> encoded);
 
-unsigned long long nCr(long long n, long long r);
+std::pair<int, double> R(std::vector<int> x, double epsilon);
+
+dataSet GenProj(double m, int d);
+
+dataSet PROT_FO(std::vector<double> v, double epsilon, double beta);
+
+std::pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon);
 
 int calculateMean(dataSet &data);
 
 int undoNorm(std::pair<std::vector<double>, std::vector<double>> max_min_pair, std::vector<double> &preNorm);
 #endif
+
+// PROT_S_HIST
+//          PROT_PP_S_Hist_pp
+//      PROT_FO
+//      AFO

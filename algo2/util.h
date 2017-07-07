@@ -10,7 +10,7 @@
 
 
 
-int parseData(char const* filename, dataSet &data);
+int parseData(char const* filename, dataSet &data, int m, int n);
 
 std::pair<std::vector<double>, std::vector<double>> normalizeNeg1toPos1(dataSet &data, std::vector<double> outlier);
 

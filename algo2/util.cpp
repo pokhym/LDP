@@ -13,9 +13,9 @@ using namespace std;
  * INPUTS: filename, dataset
  * OUTPUTS: 0 on success -1 on failure
  */
-int parseData(char const* filename, dataSet &data){
+int parseData(char const* filename, dataSet &data, int m, int n){
     cout<<"initial resize"<<endl;
-    data.rekeep_dataMtx(1000000,100);
+    data.rekeep_dataMtx(m,n);
     cout<<"initial resize complete"<<endl;
 
     string line;

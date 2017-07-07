@@ -20,10 +20,19 @@ void printall(dataSet &data){
     // }
 }
 
+double MSE(vector<double> avg_real, vector<double> avg_est){
+    int n=avg_real.size();
+    double total=0.0;
+    for(int i=0; i<n; i++){
+        total=total+(avg_real[i]-avg_est[i])*(avg_real[i]-avg_est[i]);
+    }
+    return (double)total/n;
+}
+
 
 int main(int argc, const char* argv[]){
-    if(argc!=4){
-        cout<<"usage: ./test path_to_data initial_m initial_n"<<endl;
+    if(argc!=5){
+        cout<<"usage: ./test path_to_data initial_m initial_n epsilon"<<endl;
         return 0;
     }
     dataSet *test_data=new(dataSet);
@@ -76,7 +85,7 @@ int main(int argc, const char* argv[]){
     cout<<endl;
 
     // perturb data
-    vector<double> perturb_scales=tuplePerturbation(*test_data,0.5);
+    vector<double> perturb_scales=tuplePerturbation(*test_data,stof(argv[4]));
     printall(*test_data);
 
     // calculate estimated average
@@ -106,6 +115,9 @@ int main(int argc, const char* argv[]){
          rel_error+=abs((avg[i]-avg_real[i])/avg_real[i]);
     }
     cout<<"percent releative error: "<<rel_error/test_data->get_n()<<endl;
+    cout<<endl;
+
+    cout<<"MSE: "<<MSE(avg_real, avg)<<endl;
 
     delete test_data;
     return 0;

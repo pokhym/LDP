@@ -3,9 +3,11 @@
 #include <iomanip> // remove later
 #include <cstdlib>
 #include <ctime>
+#include <bitset>
 
 #define TAB 0x09
 #define LARGENUMBER 9999999999
+int m_code=31; //  m is the number of bits the randomizer will produce
 
 using namespace std;
 
@@ -184,46 +186,156 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
     return max_min_pair;
 }
 
-/* factorial
- * DESCRIPTION: Calcualtes the factorial of the input with the tgamma function
- * INPUTS: long long representing the integer factorial we want to compute
- * OUTPUTS: the long long result of i!
+/* code
+ * DESCRIPTION: Encodes a thing into binary hamming code
+ * INPUT: A number to encode into binary hamming code
+ * OUTPUT: A character array of the encoded hamming stuff
  */
-long long factorial(long long i){
-    if(i==1)
-        return 1;
-    else
-        return i*factorial(i-1);
-}
+ vector<int> code(int input){
+     // create binary input, figure out the length of it
+     // create hamming code as required
 
-/* nCr
- * DESCRIPTION: Calculates the nCr combinations of two inputs
- * INPUTS: n, r as integers
- * OUTPUTS: number of combinations
- */
-unsigned long long nCr(long long n, long long r){
-    // use the gamma function to efficiently calculate the factorial funtion
-    cout<<"nCr func: "<< tgamma(n+1)/(tgamma(r+1)*tgamma(n-r+1))<<endl;
+     bitset<32> bit_rep(input); // displays input as binary representation
+     int right, left; // 01100 read right to left so init, right=1 left=0
+                      // then right=1 left=1 ---->
+     int idx_info=31;
+     while(1){
+         right=bit_rep[idx_info-1];
+         left=bit_rep[idx_info];
 
-    return tgamma(n+1)/(tgamma(r+1)*tgamma(n-r+1));
-}
+         if(right==1 && left==0){
+             cout<<"input: "<<input<<endl;
+             idx_info=idx_info-1; // this is now the number of bits
+             cout<<"number of digits: "<<idx_info+1<<endl;
 
-/* e_basic_normalizer
+             int sum=0;
+             for(int z=idx_info; z>=0; z--){
+                 cout<<bit_rep[z];
+                 sum=sum+bit_rep[z]*pow(2,z);
+             }
+             cout<<endl<<"sum: "<<sum<<endl;
+
+             break;
+         }
+         idx_info--;
+     }
+
+     idx_info=31;
+
+     int m=ceil(log2(idx_info+1));
+     int n=m+idx_info+1;
+
+     int parity[10]; // stores the locations of the parity bits
+
+     // generate the position of the parity bits
+     parity[0] = 1;
+     for(int i=1; i<10; i++){
+         parity[i]=(parity[i-1]<<1) & 0xfffffffe;
+     }
+
+    // compute the value of the bits at those positions
+    int red[1024];
+    int l=0;
+    int result=0;
+    int test=0;
+    for (int j=0; j<m; j++)
+    {
+      red[j] = 0;
+      l = 0;
+      for (int i=0; i<n; i++)
+      {
+        // Check that "i" is not a parity position = not a power of 2
+        result = 0;
+        test = 1;
+        for (int idx=0; idx<m; idx++)
+        {
+          if (i==test) result = 1;
+          test *= 2;
+        }
+        if (!result)
+        {
+          l++;
+          if ( (i>>(j)) & 0x01 )
+            red[j] ^= bit_rep[l];
+        }
+      }
+    }
+    printf("parity positions: ");
+    for (int i=0; i<m; i++) printf("%2d ", parity[i]);
+    printf("\n");
+
+    printf("parity bits = ");
+    for (int j=0; j<m; j++) printf("%1d", red[j]);
+    printf("\n");
+
+     // Transmit codeword
+     int i=0;
+     l=0;
+
+     vector<int> code(n, 0);
+     for(int j=0; j<n; j++){
+        if(j==(parity[l]-1) && l<m){
+            code[j]=red[l];
+            l++;
+        }
+        else{
+            code[j]=bit_rep[idx_info-i];
+            i++;
+        }
+    }
+
+
+     return code;
+ }
+
+ /* decode
+  * DESCRIPTION: Decodes a binary hamming code output
+  * INPUT: A binary encoded hamming code thing
+  * OUTPUT: The original number which was encoded using the
+  */
+  double decode(vector<int> encoded){
+    // compute syndrome
+    int syn = 0;
+    int n=encoded.size()-1;
+    for(int i=1; i<=n; i++)
+        if (encoded[i])
+            syn ^= i;
+
+    // correct error if needed
+    if(syn)
+        encoded[syn]^=1;
+
+    // compute estimate
+    int sum=0;
+    cout<<n<<endl;
+    for(int z=1; z<=n; z++){
+        // cout<<encoded[z];
+        if((int)log2(z)!=log2(z)){
+            cout<<encoded[z]<<" "<<z<<endl;
+        }
+    }
+
+    cout<<"estimated sum: "<<sum<<endl;
+
+    return 0;
+  }
+
+/* R
  * DESCRIPTION: This is a basic LDP randomizer this is based on alogrithm 1 of
  * the paper
  * INPUTS: A vector of vertices on the hypercube or an empty vector of zeros
  * NOTE: the input values are always going to be {0, 1/sqrt(x.size()), -1/sqrt(x.size())}
  * OUTPUTS: vector double same size as input x but with only one nonzero vlaue
  */
-vector<double> e_basic_normalizer(std::vector<double> x, double epsilon){
+pair<int, double> R(std::vector<int> x, double epsilon){
     if(x.size()<=0 || epsilon<=0){
-        return vector<double>(-1);
+        return pair<int, double>(-1,-1);
     }
 
     // BEGIN ALGORITHM
-    int m=x.size();
-    time_t timer;
-    default_random_engine gen(time(timer));
+    int m=m_code; //x.size();
+    // time_t timer; // TODO: figure how to make this random
+    default_random_engine gen(time(NULL));
 
     //////////////////////////////  STEP 1
     // sample j from m uniformally at random where j is an index into
@@ -272,231 +384,121 @@ vector<double> e_basic_normalizer(std::vector<double> x, double epsilon){
     }
 
     //////////////////////////////  STEP 3
-    // return a new vector with all 0s except for the zj at the index j
+    // return only the pair of index and the value
+    pair<int, double> result; // first=idx, second=value
+    result.first=j;
+    result.second=zj;
     vector<double> z_(m, 0.0);
 
-    cout<<endl;
-    for(int i=0; i<(int)z_.size(); i++){
-        if(i%12==11){
-            cout<<setw(12)<<z_[i]<<endl;
-        }
-        else{
-            cout<<setw(12)<<z_[i]<<" ";
-        }
-    }
-
-    z_[j]=zj;
-
-    cout<<endl;
-    for(int i=0; i<(int)z_.size(); i++){
-        if(i%12==11){
-            cout<<setw(12)<<z_[i]<<endl;
-        }
-        else{
-            cout<<setw(12)<<z_[i]<<" ";
-        }
-    }
-    cout<<endl;
-
-    return z_;
+    return result;
 }
 
-/* tuplePerturbation
- * DESCRIPTION: Implements algorithm 2 in the harmony algorithm
- * INPUTS: dataSet containing all the columns, epsilon, and vector of outlier
- * conditions
- * OUTPUTS: perturbed value on success -1 on fail
+/* GenProj
+ * DESCRIPTION: Generates a random projection matrix following the
+ * Johnson-Lindenstrauss lemma
+ * INPUT: Two integers representing the size m=rows, d=cols
+ * OUTPUT: A Projection matrix with sufficient randomness? Something...
  */
-vector<double> tuplePerturbation(dataSet &data, double epsilon){
-    if(data.get_n()==0 || data.get_m()==0 || epsilon<=0)
-        return vector<double>(-1);
+ dataSet GenProj(int m, int d){
+     dataSet result;
 
-    vector<double> perturbed(data.get_m(), 0.0); // store result here
-    int d=data.get_n(); // number of attributes
+     // Uniformally generate a binary value either 0=1/sqrt(m) and 1=-1/sqrt(m)
+     // Then proceed to assign the value to each thing in the matrix
 
-    // initialize rand
-    srand(time(0));
+     return result;
+ }
+/* PROT_FO
+ * DESCRIPTION: This creates a frequency oracle from a list of user inputs
+ * and a confidence parameter
+ * INPUT: Input vector of user data, and a confidence parameter
+ * OUTPUT: A dataSet structure that contains the phi FO matrix
+ */
+dataSet PROT_FO(std::vector<double> v, double epsilon, double beta){
+    dataSet FO;
 
-    // initialize the random engine for the rest of the distributions
-    default_random_engine gen;
+    /////////////////// STEP 1 Initialize the values required for computation
+    int d; // TODO: Need to figure out where to set this this is the universe
+           // of possible values (aka number of values possible)
+    int n=v.size();
+    double gamma=sqrt(log(2*d/beta)/(epsilon*n));
+    int m=(log(d+1)*log(2/beta))/(gamma*gamma);
 
-    //    --
-    //    | 2^(d-1), if d is odd
-    // Cd=|
-    //    | 2^(d-1)- 1/2 * nCr(d, d/2), otherwise
-    //    --
-    //   --
-    //   |      2^d + Cd*(exp(epsilon) - 1)
-    //   | ------------------------------------ , if d is odd
-    //   | nCr(d-1, (d-1)/2)*(exp(epsilon) - 1)
-    // B=|
-    //   |    2^d + Cd*(exp(epsilon) - 1)
-    //   | -------------------------------- , otherwise
-    //   | nCr(d-1, d/2)*(exp(epsilon) - 1)
-    //   --
-    // First calculate B
-    long double B=0.0;
-    if(d%2==0){
+    ////////////////// STEP 2 Create a phi matrix
+    dataSet phi=GenProj(m,d);
 
-        // 2^d     + Cd                *                                             exp(epsilon)-1
-        B=(pow(2, d)+(pow(2, d-1)-0.5*(tgamma(d+1)/(tgamma(d/2+1)*tgamma(d-d/2+1))))*(exp(epsilon)-1))/
-          ((tgamma(d-1+1)/(tgamma((d-1)/2+1)*tgamma(d-1-(d-1)/2+1)))*(exp(epsilon)-1));
-           // ncR(d-1, d/2)                   *                      exp(epsilon)-1
-    }
-    else{
-        B=(pow(2, d)+pow(2, d-1)*(exp(epsilon)-1))/
-          ((tgamma(d-1+1)/(tgamma(d/2+1)*tgamma(d-1-d/2+1)))*(exp(epsilon)-1));
-    }
-
-    // for each row
-    for(int i=0; i<data.get_m(); i++){
-        /////////////////////////////////// STEP 1
-        vector<int> v(data.get_n(), 0);
-        // for each column generate v
-        for(int j=0; j<data.get_n(); j++){
-            // grab Aj a random attribute
-            // double Aj=rand()%d; // needs to have a max number of d-1 attributes (0 indexed)
-
-            // generate a v vector containing {1,-1} for each Aj with following prob dist
-            // NOTE: Aj=j in this case
-            //             --
-            //             | 1/2 + 1/2 * ti[Aj], if x=1
-            // Pr[v[Aj]=x]=|
-            //             | 1/2 - 1/2 * ti[Aj], if x=-1
-            //             --
-            // 0.5+0.5*1=.75 0.5+0.5*.75=.875
-            // 0.5-0.5*1=.25 0.5-0.5*.75=.125
-            //-------------------------------
-            //           1.0             1.0 always sums to 1 so only need to use one of the lines
-
-            double prob_v=0.5+0.5*data.get_dataMtx(i, j);
-            bernoulli_distribution distty(prob_v); // use the result of 1 to mark as 1 else -1
-
-            if(distty(gen)){
-                v[j]=1;
-            }
-            else{
-                v[j]=-1;
-            }
-        }
-
-        //////////////////////////////// STEP 2
-        // Time to choose whether we want to use T+ or T-
-        bernoulli_distribution dist(exp(epsilon)/(exp(epsilon)+1));
-        int T_plus_minus=dist(gen);
-
-        // Now generate T+ and T-
-        // T+ is defined as t* element {B-, B+}^d where t* * v>0
-        // T- is defined as t* element {B-, B+}^d where t* * v<=0
-        // For example from the paper if ti=< 1, 1 >
-        // T+ = { <B, B> }
-        // T- = { <-B, -B>, <-B, B>, <B, -B> }
-        // Instead of choosing one combination from many we just generate one at random
-        // For example in the case of T+ the idea is to generate the indexes we want to be positive
-        // then fill in the gaps with the rest as negative
-
-        // Case T+: There must be more than d/2 positive B's
-        if(T_plus_minus){
-            int num_positive=rand()%(d/2)+d/2+1; // if d=20 we want to have between 11-20 B
-                                                 // achieve by doing d/2+1=11 and rand()%(d/2)=0-9
-
-            vector<double> B_flags(d, 0.0);
-            // Set the positive values first
-            // there are 2 cases accounting for v=-1 and v=1
-            int count=0;
-            while(count!=num_positive){
-                int idx=rand()%d;
-                if(v[idx]==1 && B_flags[idx]==0.0){ // set 1 for positive vars
-                    B_flags[idx]=1;
-                    count++;
-                }
-                else if(v[idx]==-1 && B_flags[idx]==0.0){ // v=-1 and we need to set -1
-                    B_flags[idx]=-1;
-                    count++;
-                }
-            }
-
-            // we can now set the negative values
-            for(int p=0; p<(int)B_flags.size(); p++){
-                if(B_flags[p]==0){
-                    if(v[p]==1){
-                        B_flags[p]=-1;
-                    }
-                    else{
-                        B_flags[p]=1;
-                    }
-                }
-            }
-
-            // we have now obtained the correct signs of B in the current user row
-            // set the values accordingly
-            double sum=0;
-
-            for(int p=0; p<d; p++){
-                data.set_dataMtx(i+1, p+1, B*B_flags[p]);
-                sum=sum+(double)v[p]*data.get_dataMtx(i, p);
-            }
-
-            // if(sum<=0){
-            //     cout<<"T+ i "<<i<<" sum "<<sum<<" "<<B_flags.size()<<endl;
-            //     for(int i=0; i<(int)B_flags.size(); i++){
-            //         cout<<B_flags[i]<<" "<<v[i]<<" "<<" ***** "<<B_flags[i]*(double)v[i]<<" **** ";
-            //     }
-            //     cout<<endl; cout<<endl;
-            // }
-        }
-
-        // Case T-: There must be less than or equal to d/2 negative B's
-        else{
-            int num_positive=rand()%(d/2+1); // if d=20 we want to have between 0-10 B
-                                             // achieve by doing rand()%(d/2+1)=0-10
-            vector<double> B_flags(d, 0.0);
-            // Set the positive values first
-            // there are 2 cases accounting for v=-1 and v=1
-            int count=0;
-            while(count!=num_positive){
-                int idx=rand()%d;
-                if(v[idx]==1 && B_flags[idx]==0.0){ // set 1 for positive vars
-                    B_flags[idx]=1;
-                    count++;
-                }
-                else if(v[idx]==-1 && B_flags[idx]==0.0){ // v=-1 and we need to set -1
-                    B_flags[idx]=-1;
-                    count++;
-                }
-            }
-
-            // we can now set the negative values
-            for(int p=0; p<(int)B_flags.size(); p++){
-                if(B_flags[p]==0){
-                    if(v[p]==1){
-                        B_flags[p]=-1;
-                    }
-                    else{
-                        B_flags[p]=1;
-                    }
-                }
-            }
-
-            // we have now obtained the correct signs of B in the current user row
-            // set the values accordingly
-            double sum=0;
-            for(int p=0; p<d; p++){
-                data.set_dataMtx(i+1, p+1, B*B_flags[p]);
-                sum=sum+(double)v[p]*data.get_dataMtx(i, p);
-            }
-            // if(sum>0){
-            //     cout<<"T- i "<<i<<" sum "<<sum<<endl;
-            // }
-        }
-
-    } // end each row
-
-    return perturbed;
+    return FO;
 }
 
+/* PROT_PP_S_Hist_PP
+ * DESCRIPTION: Produces a succinct histogram under promise
+ * INPUTS: data each row=1 user each column = attribute, epsilon (privacy),
+ * and beta (confidence parameter)
+ * OUTPUTS:
+ */
+pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon){
+    /////////////////////////// STEP 1
+    // storage for the value and index into the {0,0...,zj,...0,0} vector
+    vector<pair<int, double>> ind_val;
+    // each user will encode their item
+    for(int i=0; i<data.get_m(); i++){
+        // if item exists code
+        vector<int> encoded(m_code, 0);
+        if(data.get_dataMtx(i, 0)){
+            encoded=code((int)data.get_dataMtx(i, 0));
+        }
+        // else set zero
+        else{}
+        // compute user randomized report using R and sends to server
+        ind_val.push_back(R(encoded, epsilon));
+    }
 
+    /////////////////////////// STEP 2
+    // server computes z_bar average over all the z's
+    vector<double> sums(m_code, 0.0);
+    vector<double> counts(m_code, 0);
+    for(int i=0; i<(int)ind_val.size(); i++){
+        sums[ind_val[i].first]+=sums[ind_val[i].first]+ind_val[i].second;
+        counts[ind_val[i].first]++;
+    }
+    vector<double> avgs(m_code, 0.0);  // this is z_bar
+    for(int i=0; i<(int)sums.size(); i++){
+        avgs[i]=(double)sums[i]/counts[i];
+    }
 
+    // compute y by rounding to the 1/sqrt(m) thing
+    vector<double> y_bar(m_code, 0.0);
+    for(int i=0; i<(int)avgs.size(); i++){
+        if(y_bar[i]>=0)
+            y_bar[i]=1.0/sqrt(m_code);
+        else
+            y_bar[i]=-1.0/sqrt(m_code);
+    }
+
+    /////////////////////////// STEP 3
+    // decode the y vector to get the average and the frequency estimate
+    // convert y_bar to binary
+    vector<int> y_bar_int(m_code, 0);
+    for(int i=0; i<(int)y_bar.size(); i++){
+        if(y_bar[i]==1.0/sqrt(m_code))
+            y_bar_int[i]=1;
+        else
+            y_bar_int[i]=0;
+    }
+    double avg_est=decode(y_bar_int);
+
+    int inner_product=0.0; // this is the frequency estimate
+    for(int i=0; i<(int)avgs.size(); i++){
+        inner_product+=(double)avgs[i]*y_bar[i];
+    }
+
+    /////////////////////////// STEP 5
+    // return the estimated hevay hitter value and its frequency
+    pair<double, double> result;
+    result.first=avg_est;
+    result.second=inner_product;
+
+    return result;
+}
 
 /* undoNorm
  * DESCRIPTION: Undos the [-1, 1] normalization

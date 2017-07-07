@@ -1,0 +1,11 @@
+Set up a new data structure?
+
+d = number of possible answers
+m = number of users
+e_vi = standard basis vector
+
+1. R: we need to make a randomization scheme (DONE)
+2. PROT-FO: create a frequency oracle pg 7
+3. GenProj(m,d): This generates a mxd phi matrix pg 6
+4. PROTPP-S-HIST-pp: Encapsulates all the other things and Afo to avg pg 9
+5. Afo to calculate the frequency of the input value pg 7

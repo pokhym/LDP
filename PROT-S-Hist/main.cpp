@@ -46,7 +46,7 @@ void test_basic_randomizer(){
     }
 
     // call the randomizer function
-    e_basic_normalizer(test_vec, 0.5);
+    //R(test_vec, 0.5);
 
     cout<<endl;
 
@@ -59,6 +59,28 @@ void test_basic_randomizer(){
         }
     }
     cout<<"test randomizer function end"<<endl;
+}
+
+int test_code(){
+    vector<int> res=code(23); // 1101
+
+    for(int i=0; i<(int)res.size(); i++)
+        cout<<res[i];
+    cout<<endl;
+
+    decode(res);
+    // code(5); // 0101
+    // code(14);// 1110
+    return 0;
+}
+
+int test_PROT_PP_S_Hist_PP(dataSet &data, double epsilon){
+    pair<double, double> ret;
+    ret=PROT_PP_S_Hist_pp(data, epsilon);
+    cout<<ret.first<<endl;
+    cout<<ret.second<<endl;
+
+    return 0;
 }
 
 
@@ -81,8 +103,6 @@ int main(int argc, const char* argv[]){
         return -1;
     }
 
-    printall(*test_data);
-
     cout<<"parse end"<<endl;
 
     int m=test_data->get_m();
@@ -91,9 +111,9 @@ int main(int argc, const char* argv[]){
 
     cout<<endl;
 
-    test_basic_randomizer();
-
-
+    // test_basic_randomizer();
+    test_code();
+    // test_PROT_PP_S_Hist_PP(*test_data, 0.5);
 
     return 0;
 }
