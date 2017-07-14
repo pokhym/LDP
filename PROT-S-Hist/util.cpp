@@ -7,9 +7,9 @@
 
 #define TAB 0x09
 #define LARGENUMBER 9999999999
-int m_code=31; //  m is the number of bits the randomizer will produce
-
+int m_max=5; // set number of bits of R
 using namespace std;
+default_random_engine gen(time(0));
 
 /* parseData
  * DESCRIPTION: Parses a comma separated list of data. Each column represents
@@ -192,6 +192,11 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
  * OUTPUT: A character array of the encoded hamming stuff
  */
  vector<int> code(int input){
+     // deal with 0 input case
+     if(input==0){
+         vector<int> asdf(m_max+3, 0);
+         return asdf;
+    }
      // create binary input, figure out the length of it
      // create hamming code as required
 
@@ -204,23 +209,21 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
          left=bit_rep[idx_info];
 
          if(right==1 && left==0){
-             cout<<"input: "<<input<<endl;
+             //cout<<"input: "<<input<<endl;
              idx_info=idx_info-1; // this is now the number of bits
-             cout<<"number of digits: "<<idx_info+1<<endl;
+             //cout<<"number of digits: "<<idx_info+1<<endl;
 
              int sum=0;
              for(int z=idx_info; z>=0; z--){
-                 cout<<bit_rep[z];
+                 //cout<<bit_rep[z];
                  sum=sum+bit_rep[z]*pow(2,z);
              }
-             cout<<endl<<"sum: "<<sum<<endl;
+             //cout<<endl<<"sum: "<<sum<<endl;
 
              break;
          }
          idx_info--;
      }
-
-     idx_info=31;
 
      int m=ceil(log2(idx_info+1));
      int n=m+idx_info+1;
@@ -260,13 +263,13 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
         }
       }
     }
-    printf("parity positions: ");
-    for (int i=0; i<m; i++) printf("%2d ", parity[i]);
-    printf("\n");
-
-    printf("parity bits = ");
-    for (int j=0; j<m; j++) printf("%1d", red[j]);
-    printf("\n");
+    // printf("parity positions: ");
+    // for (int i=0; i<m; i++) printf("%2d ", parity[i]);
+    // printf("\n");
+    //
+    // printf("parity bits = ");
+    // for (int j=0; j<m; j++) printf("%1d", red[j]);
+    // printf("\n");
 
      // Transmit codeword
      int i=0;
@@ -284,8 +287,10 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
         }
     }
 
+    if(m_max<(int)code.size())
+        m_max=code.size(); // set the number of bits needed
 
-     return code;
+    return code;
  }
 
  /* decode
@@ -295,29 +300,39 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
   */
   double decode(vector<int> encoded){
     // compute syndrome
-    int syn = 0;
-    int n=encoded.size()-1;
-    for(int i=1; i<=n; i++)
-        if (encoded[i])
-            syn ^= i;
-
-    // correct error if needed
-    if(syn)
-        encoded[syn]^=1;
+    // int syn = 0;
+     int n=encoded.size();
+    // for(int i=1; i<=n; i++){
+    //     if (encoded[i])
+    //         syn ^= i;
+    // }
+    //
+    // // correct error if needed
+    // if(syn)
+    //     encoded[syn]^=1;
 
     // compute estimate
     int sum=0;
-    cout<<n<<endl;
-    for(int z=1; z<=n; z++){
-        // cout<<encoded[z];
-        if((int)log2(z)!=log2(z)){
-            cout<<encoded[z]<<" "<<z<<endl;
+    int num_parity=(int)log2(n+1);
+    int parity_encountered=0;
+    vector<int> orig;
+
+    for(int z=0; z<n; z++){
+        if(((int)log2(z+1)!=log2(z+1) || (z+1)==pow(2,num_parity)) && parity_encountered<=num_parity){
+            orig.push_back(encoded[z]);
         }
+        else if((int)log2(z+1)==log2(z+1) && parity_encountered!=num_parity){
+            parity_encountered++;
+        }
+    }
+
+    for(int i=0; i<(int)orig.size(); i++){
+        sum=sum+orig[i]*pow(2, orig.size()-1-i);
     }
 
     cout<<"estimated sum: "<<sum<<endl;
 
-    return 0;
+    return sum;
   }
 
 /* R
@@ -333,14 +348,14 @@ pair<int, double> R(std::vector<int> x, double epsilon){
     }
 
     // BEGIN ALGORITHM
-    int m=m_code; //x.size();
+    int m=m_max; //x.size();
     // time_t timer; // TODO: figure how to make this random
-    default_random_engine gen(time(NULL));
+    static default_random_engine gen(time(0));
 
     //////////////////////////////  STEP 1
     // sample j from m uniformally at random where j is an index into
     // the vector m thus having index value of 0 to m.size()-1
-    uniform_int_distribution<int> idx_gen(0, m-1);
+    uniform_int_distribution<int> idx_gen(0, m);
     int j=idx_gen(gen);
 
     //////////////////////////////  STEP 2
@@ -436,68 +451,127 @@ dataSet PROT_FO(std::vector<double> v, double epsilon, double beta){
  * OUTPUTS:
  */
 pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon){
-    /////////////////////////// STEP 1
-    // storage for the value and index into the {0,0...,zj,...0,0} vector
-    vector<pair<int, double>> ind_val;
-    // each user will encode their item
+    pair<double, double> result; // return values, first is the value
+                                // second is the frequency
+
+    ///////////////////////// STEP 1
+    // 1: for Users i = 1 to n do
+    // 2:   If vi =/= NOT, then user i encodes its item: xi = c(vi). Else, user i sets xi = 0.
+    // 3:   User i computes its private report: zi = Ri (xi, epsilon).
+    // 4:   User i sends zi the server
+    vector<pair<int, double> > zi_temp;
+    pair<int,double> zi;
     for(int i=0; i<data.get_m(); i++){
-        // if item exists code
-        vector<int> encoded(m_code, 0);
-        if(data.get_dataMtx(i, 0)){
-            encoded=code((int)data.get_dataMtx(i, 0));
+        if(data.get_dataMtx(i, 0)!=0){ // code
+            // NOTE: BROKEN CODE?
+            vector<int> c=code(data.get_dataMtx(i,0));
+            zi=R(c, epsilon);
+            zi_temp.push_back(zi);
         }
-        // else set zero
-        else{}
-        // compute user randomized report using R and sends to server
-        ind_val.push_back(R(encoded, epsilon));
+        else{ // set 0
+            vector<int> c=code(0);
+            zi=R(c, epsilon);
+            zi_temp.push_back(zi);
+        }
+        //cout<<"i: "<<i<<" "<<"zi (idx, val): "<<zi.first<<" "<<zi.second<<endl;
     }
 
-    /////////////////////////// STEP 2
-    // server computes z_bar average over all the z's
-    vector<double> sums(m_code, 0.0);
-    vector<double> counts(m_code, 0);
-    for(int i=0; i<(int)ind_val.size(); i++){
-        sums[ind_val[i].first]+=sums[ind_val[i].first]+ind_val[i].second;
-        counts[ind_val[i].first]++;
+    ///////////////////////// STEP 2
+    // 5: Server computes z_bar=(1/n)summation(1 to n)zi
+    // now actually store all the data in a zi vector
+    vector<double> z(m_max, 0.0);
+    int n=0;
+    for(int i=0; i<(int)zi_temp.size(); i++){
+        z[zi_temp[i].first]=z[zi_temp[i].first]+zi_temp[i].second;
+        n++;
     }
-    vector<double> avgs(m_code, 0.0);  // this is z_bar
-    for(int i=0; i<(int)sums.size(); i++){
-        avgs[i]=(double)sums[i]/counts[i];
+    for(int i=0; i<(int)m_max; i++){
+        z[i]=z[i]/n; // this should be == zi_temp.size()
+        //cout<<z[i];
     }
 
-    // compute y by rounding to the 1/sqrt(m) thing
-    vector<double> y_bar(m_code, 0.0);
-    for(int i=0; i<(int)avgs.size(); i++){
-        if(y_bar[i]>=0)
-            y_bar[i]=1.0/sqrt(m_code);
+    ///////////////////////// STEP 3
+    // compute y by rounding z to {-1/sqrt(m), 1/sqrt(m)}^m
+    //       --
+    //       | 1/sqrt(m)    if zj>=0
+    // y_j = |
+    //       | -1/sqrt(m)   otherwise
+    //       --
+    vector<int> y(z.size(), 0.0);
+    for(int i=0; i<(int)z.size(); i++){
+        if(z[i]>0)
+            y[i]=1;//1/sqrt(m_max);
         else
-            y_bar[i]=-1.0/sqrt(m_code);
+            y[i]=0;//-1/sqrt(m_max);
     }
 
-    /////////////////////////// STEP 3
-    // decode the y vector to get the average and the frequency estimate
-    // convert y_bar to binary
-    vector<int> y_bar_int(m_code, 0);
-    for(int i=0; i<(int)y_bar.size(); i++){
-        if(y_bar[i]==1.0/sqrt(m_code))
-            y_bar_int[i]=1;
-        else
-            y_bar_int[i]=0;
-    }
-    double avg_est=decode(y_bar_int);
-
-    int inner_product=0.0; // this is the frequency estimate
-    for(int i=0; i<(int)avgs.size(); i++){
-        inner_product+=(double)avgs[i]*y_bar[i];
-    }
-
-    /////////////////////////// STEP 5
-    // return the estimated hevay hitter value and its frequency
-    pair<double, double> result;
-    result.first=avg_est;
-    result.second=inner_product;
+    ///////////////////////// STEP 4
+    // decode y
+    result.first=decode(y);
 
     return result;
+    // /////////////////////////// STEP 1
+    // // storage for the value and index into the {0,0...,zj,...0,0} vector
+    // vector<pair<int, double>> ind_val;
+    // // each user will encode their item
+    // for(int i=0; i<data.get_m(); i++){
+    //     // if item exists code
+    //     vector<int> encoded(m_code, 0);
+    //     if(data.get_dataMtx(i, 0)){
+    //         encoded=code((int)data.get_dataMtx(i, 0));
+    //     }
+    //     // else set zero
+    //     else{}
+    //     // compute user randomized report using R and sends to server
+    //     ind_val.push_back(R(encoded, epsilon));
+    // }
+    //
+    // /////////////////////////// STEP 2
+    // // server computes z_bar average over all the z's
+    // vector<double> sums(m_code, 0.0);
+    // vector<double> counts(m_code, 0);
+    // for(int i=0; i<(int)ind_val.size(); i++){
+    //     sums[ind_val[i].first]+=sums[ind_val[i].first]+ind_val[i].second;
+    //     counts[ind_val[i].first]++;
+    // }
+    // vector<double> avgs(m_code, 0.0);  // this is z_bar
+    // for(int i=0; i<(int)sums.size(); i++){
+    //     avgs[i]=(double)sums[i]/counts[i];
+    // }
+    //
+    // // compute y by rounding to the 1/sqrt(m) thing
+    // vector<double> y_bar(m_code, 0.0);
+    // for(int i=0; i<(int)avgs.size(); i++){
+    //     if(y_bar[i]>=0)
+    //         y_bar[i]=1.0/sqrt(m_code);
+    //     else
+    //         y_bar[i]=-1.0/sqrt(m_code);
+    // }
+    //
+    // /////////////////////////// STEP 3
+    // // decode the y vector to get the average and the frequency estimate
+    // // convert y_bar to binary
+    // vector<int> y_bar_int(m_code, 0);
+    // for(int i=0; i<(int)y_bar.size(); i++){
+    //     if(y_bar[i]==1.0/sqrt(m_code))
+    //         y_bar_int[i]=1;
+    //     else
+    //         y_bar_int[i]=0;
+    // }
+    // double avg_est=decode(y_bar_int);
+    //
+    // int inner_product=0.0; // this is the frequency estimate
+    // for(int i=0; i<(int)avgs.size(); i++){
+    //     inner_product+=(double)avgs[i]*y_bar[i];
+    // }
+    //
+    // /////////////////////////// STEP 5
+    // // return the estimated hevay hitter value and its frequency
+    // pair<double, double> result;
+    // result.first=avg_est;
+    // result.second=inner_product;
+    //
+    // return result;
 }
 
 /* undoNorm

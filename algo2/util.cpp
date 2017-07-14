@@ -127,6 +127,9 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
                 if(data.get_dataMtx(m,n)<min_curr_col)
                     min_curr_col=data.get_dataMtx(m,n); // update
             }
+            else{
+                data.set_dataMtx(m+1, n+1, LARGENUMBER);
+            }
         }
         // save into vector and iterate to next column
         max[n]=max_curr_col;
@@ -207,7 +210,7 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
         // Pr[u=1]= ----------------------------------------
         //                     2*exp^(epsilon)+2
 
-        if(data.get_dataMtx(i,n)!=0){
+        if(data.get_dataMtx(i,n)!=LARGENUMBER){ // -2.0 is set to outlier
             numerator=data.get_dataMtx(i, n)*(exp(epsilon)-1.0)+exp(epsilon)+1.0;
             denominator=(double)2.0*exp(epsilon)+2.0;
             probability=numerator/denominator;

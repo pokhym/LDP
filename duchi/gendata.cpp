@@ -11,7 +11,7 @@ int main()
   ofstream myfile;
   myfile.open("data.txt");
 
-  const int rows=1000000;
+  const int rows=10000;
   const int cols=100;
 
   std::default_random_engine generator;

@@ -6,6 +6,7 @@
 #include "util.h"
 
 using namespace std;
+#define LARGENUMBER 9999999999
 
 void printall(dataSet &data){
     // int m=data.get_m();
@@ -94,7 +95,7 @@ int main(int argc, const char* argv[]){
 
     for(int j=0; j<test_data->get_n(); j++){
         for(int i=0; i<test_data->get_m(); i++){
-            if(test_data->get_dataMtx(i,j)!=0){
+            if(test_data->get_dataMtx(i,j)!=LARGENUMBER){
                 avg[j]=avg[j]+test_data->get_dataMtx(i,j);
                 counters[j]++;
             }

@@ -5,7 +5,7 @@
 #include <ctime>
 
 #define TAB 0x09
-#define LARGENUMBER 9999999999
+#define LARGENUMBER 999999999
 
 using namespace std;
 
@@ -19,9 +19,9 @@ int parseData(char const* filename, dataSet &data, int init_m, int init_n){
     if(init_m<1 || init_n<1 || filename==NULL)
         return -1;
 
-    cout<<"initial resize"<<endl;
+    // cout<<"initial resize"<<endl;
     data.rekeep_dataMtx(init_m,init_n);
-    cout<<"initial resize complete"<<endl;
+    // cout<<"initial resize complete"<<endl;
 
     string line;
     ifstream myfile(filename);
@@ -36,8 +36,8 @@ int parseData(char const* filename, dataSet &data, int init_m, int init_n){
         // read all lines
         while(getline(myfile, line)){
             row_count++;
-            if(row_count%10000==0)
-                cout<<"row count: "<<row_count<<endl;
+            // if(row_count%10000==0)
+                // cout<<"row count: "<<row_count<<endl;
             for(int i=0; i<(int)line.length(); i++){
                 // check for the delimiter
                 // parse the number from the last idx
@@ -171,7 +171,7 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
 
                 // else we need to set to 0
                 else{
-                    data.set_dataMtx(m+1,n+1,0.0);
+                    data.set_dataMtx(m+1,n+1, LARGENUMBER);
                 }
             }
         }
@@ -275,15 +275,20 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
             // 0.5-0.5*1=.25 0.5-0.5*.75=.125
             //-------------------------------
             //           1.0             1.0 always sums to 1 so only need to use one of the lines
+            // only do this if not an outlier
+            if(data.get_dataMtx(i,j)!=LARGENUMBER){
+                double prob_v=0.5+0.5*data.get_dataMtx(i, j);
+                bernoulli_distribution distty(prob_v); // use the result of 1 to mark as 1 else -1
 
-            double prob_v=0.5+0.5*data.get_dataMtx(i, j);
-            bernoulli_distribution distty(prob_v); // use the result of 1 to mark as 1 else -1
-
-            if(distty(gen)){
-                v[j]=1;
+                if(distty(gen)){
+                    v[j]=1;
+                }
+                else{
+                    v[j]=-1;
+                }
             }
-            else{
-                v[j]=-1;
+            else{ // otherwise set LARGENUMBER use as a flag for later
+                v[j]=LARGENUMBER;
             }
         }
 
@@ -321,6 +326,10 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
                     B_flags[idx]=-1;
                     count++;
                 }
+                else{
+                    count++;
+                }
+                // ignore LARGENUMBER case
             }
 
             // we can now set the negative values
@@ -329,9 +338,10 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
                     if(v[p]==1){
                         B_flags[p]=-1;
                     }
-                    else{
+                    else if(v[p]==-1){
                         B_flags[p]=1;
                     }
+                    // ignore LARGENUMBER case
                 }
             }
 
@@ -340,8 +350,10 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
             double sum=0;
 
             for(int p=0; p<d; p++){
-                data.set_dataMtx(i+1, p+1, B*B_flags[p]);
-                sum=sum+(double)v[p]*data.get_dataMtx(i, p);
+                if(B_flags[p]!=0.0){
+                    data.set_dataMtx(i+1, p+1, B*B_flags[p]);
+                    sum=sum+(double)v[p]*data.get_dataMtx(i, p);
+                }
             }
 
             // if(sum<=0){
@@ -371,6 +383,10 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
                     B_flags[idx]=-1;
                     count++;
                 }
+                else{
+                    count++;
+                }
+                // ignore LARGENUMBER case
             }
 
             // we can now set the negative values
@@ -379,7 +395,7 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
                     if(v[p]==1){
                         B_flags[p]=-1;
                     }
-                    else{
+                    else if(v[p]==-1){
                         B_flags[p]=1;
                     }
                 }
@@ -389,8 +405,10 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
             // set the values accordingly
             double sum=0;
             for(int p=0; p<d; p++){
-                data.set_dataMtx(i+1, p+1, B*B_flags[p]);
-                sum=sum+(double)v[p]*data.get_dataMtx(i, p);
+                if(B_flags[p]!=0){
+                    data.set_dataMtx(i+1, p+1, B*B_flags[p]);
+                    sum=sum+(double)v[p]*data.get_dataMtx(i, p);
+                }
             }
             // if(sum>0){
             //     cout<<"T- i "<<i<<" sum "<<sum<<endl;

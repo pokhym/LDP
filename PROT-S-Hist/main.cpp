@@ -62,13 +62,10 @@ void test_basic_randomizer(){
 }
 
 int test_code(){
-    vector<int> res=code(23); // 1101
+    vector<int> res(10, 0.0);
+    // res=code(11); // 1101
 
-    for(int i=0; i<(int)res.size(); i++)
-        cout<<res[i];
-    cout<<endl;
-
-    decode(res);
+    // decode(res);
     // code(5); // 0101
     // code(14);// 1110
     return 0;
@@ -76,9 +73,16 @@ int test_code(){
 
 int test_PROT_PP_S_Hist_PP(dataSet &data, double epsilon){
     pair<double, double> ret;
-    ret=PROT_PP_S_Hist_pp(data, epsilon);
-    cout<<ret.first<<endl;
-    cout<<ret.second<<endl;
+    int n=1000;
+    double sum=0;
+    for(int i=0; i<n; i++){
+        cout<<"iteration: "<<i<<" desired value: "<<"10"<<endl;
+        ret=PROT_PP_S_Hist_pp(data, epsilon);
+        sum=sum+ret.first;
+        cout<<"running average: "<<(double)sum/(i+1)<<endl;
+        cout<<endl;
+    }
+    cout<<(double)sum/n<<endl;
 
     return 0;
 }
@@ -112,8 +116,8 @@ int main(int argc, const char* argv[]){
     cout<<endl;
 
     // test_basic_randomizer();
-    test_code();
-    // test_PROT_PP_S_Hist_PP(*test_data, 0.5);
+    // test_code();
+    test_PROT_PP_S_Hist_PP(*test_data, 0.5);
 
     return 0;
 }
