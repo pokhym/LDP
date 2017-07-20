@@ -229,24 +229,46 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
      }
 
      // we now create 32/4=8 sets of 7 bits
-     // p1 p2 p3 d1 d2 d3 d4
      // number of sets of 7 we need
-     int num_blocks=idx_info/4+1;
+     int num_blocks=idx_info/4+1; int block_counter=num_blocks;
      vector<int> hamming_code(num_blocks*7, 0); // store the bits backwards
                                     // this means that bit_rep[31]==hamming_code[31]
 
-     for(int i=num_blocks; i>0; i--){
-         // grab the four data bits and stuff them in
-         // 7*i-1=index to the first set
-         // 55 54 53 52 51 50 49
-         // d4 d3 d2 d1 p3 p2 p1
-         hamming_code[7*i-1]=bit_rep[4*i-1];
-         hamming_code[7*i-2]=bit_rep[4*i-2];
-         hamming_code[7*i-3]=bit_rep[4*i-3];
-         hamming_code[7*i-4]=bit_rep[4*i-4];
-         hamming_code[7*i-5]=0;
-         hamming_code[7*i-6]=0;
-         hamming_code[7*i-7]=0;
+    // the following computation is computed by doing
+    //                    p1 p2 p3 d1 d2 d3 d4 vectors
+    //                   | 0  1  1  1  0  0  0 |
+    // | d1 d2 d3 d4 | * | 1  0  1  0  1  0  0 | = encoded
+    //                   | 1  1  0  0  0  1  0 |
+    //                   | 1  1  1  0  0  0  1 |
+     for(int i=0; i<num_blocks; i++){
+        // 0 1 1 1
+        hamming_code[7*i]=(bit_rep[4*block_counter-1]*0+bit_rep[4*block_counter-2]*1
+                         +bit_rep[4*block_counter-3]*1+bit_rep[4*block_counter-4]*1)%2;
+
+        // 1 0 1 1
+        hamming_code[7*i+1]=(bit_rep[4*block_counter-1]*1+bit_rep[4*block_counter-2]*0
+                         +bit_rep[4*block_counter-3]*1+bit_rep[4*block_counter-4]*1)%2;
+
+        // 1 1 0 1
+        hamming_code[7*i+2]=(bit_rep[4*block_counter-1]*1+bit_rep[4*block_counter-2]*1
+                         +bit_rep[4*block_counter-3]*0+bit_rep[4*block_counter-4]*1)%2;
+
+        // 1 0 0 0
+        hamming_code[7*i+3]=(bit_rep[4*block_counter-1]*1+bit_rep[4*block_counter-2]*0
+                         +bit_rep[4*block_counter-3]*0+bit_rep[4*block_counter-4]*0)%2;
+
+        // 0 1 0 0
+        hamming_code[7*i+4]=(bit_rep[4*block_counter-1]*0+bit_rep[4*block_counter-2]*1
+                         +bit_rep[4*block_counter-3]*0+bit_rep[4*block_counter-4]*0)%2;
+
+        // 0 0 1 0
+        hamming_code[7*i+5]=(bit_rep[4*block_counter-1]*0+bit_rep[4*block_counter-2]*0
+                         +bit_rep[4*block_counter-3]*1+bit_rep[4*block_counter-4]*0)%2;
+
+        // 0 0 0 1
+        hamming_code[7*i+6]=(bit_rep[4*block_counter-1]*0+bit_rep[4*block_counter-2]*0
+                         +bit_rep[4*block_counter-3]*0+bit_rep[4*block_counter-4]*1)%2;
+
      }
 
      return hamming_code;
@@ -258,10 +280,83 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
   * OUTPUT: The original number which was encoded using the
   */
   double decode(vector<int> encoded){
-      // ignore error correction for now just decode the binary
+      cout<<"decode"<<endl;
+      // check parity bits to see if they match
+      int counter=encoded.size()/7; // used to mark how many parts of 7
+      // parity bits in 2 1 0 idx
+      int r_p3, r_p2, r_p1, c_p1, c_p2, c_p3;
+
+      for(int i=encoded.size()-1; i>=0; i--){
+          if(i%7==2){
+              r_p3=encoded[i];
+              c_p3=(encoded[counter*7]+encoded[counter*7-1]+encoded[counter-3])%2;
+          }
+          if(i%7==1){
+              r_p2=encoded[i];
+              c_p2=(encoded[counter*7]+encoded[counter*7-2]+encoded[counter-3])%2;
+          }
+          if(i%7==0){
+              r_p1=encoded[i];
+              c_p1=(encoded[counter*7-1]+encoded[counter*7-2]+encoded[counter-3])%2;
+              counter--;
+          }
+          // double check parity bits
+          // p1 = d2 + d3 + d4
+          // p2 = d1 + d3 + d4
+          // p3 = d1 + d2 + d4
+          cout<<encoded[i];
+      }
+      cout<<endl;
+
+      if(1){//r_p3!=c_p3 || r_p2!=c_p2 || r_p1!=c_p1){ // some of the parity bits are wrong fix them
+          // create a parity check matrix and solve for the syndrome
+          // Row 1: Contains 1 in the first parity bit position and the bits used to calculate parity
+          // Row 2: Contains 1 in the second parity bit position and the bits used to calculate parity
+          // Row 3: Contains 1 in the third partiy bit position and the bits used to calculate parity
+          //
+          //     | 1 0 0 0 1 1 1 |
+          // H = | 0 1 0 1 0 1 1 |
+          //     | 0 0 1 1 1 0 1 |
+          //
+          // H*encode= 3x1 matrix of syndrome
+          // if syndrome all 0 then error free
+          // else flipping the encoded bit that is in the position of the column in [H] that matches the syndrome will result in a valid code word
+          dataSet H;
+          H.rekeep_dataMtx(3, 7);
+          // Row 1
+          H.set_dataMtx(0+1, 0+1, 1); H.set_dataMtx(0+1, 1+1, 0); H.set_dataMtx(0+1, 2+1, 0);
+          H.set_dataMtx(0+1, 3+1, 0); H.set_dataMtx(0+1, 4+1, 1); H.set_dataMtx(0+1, 5+1, 1);
+          H.set_dataMtx(0+1, 6+1, 1);
+          // Row 2
+          H.set_dataMtx(1+1, 0+1, 0); H.set_dataMtx(1+1, 1+1, 1); H.set_dataMtx(1+1, 2+1, 0);
+          H.set_dataMtx(1+1, 3+1, 1); H.set_dataMtx(1+1, 4+1, 0); H.set_dataMtx(1+1, 5+1, 1);
+          H.set_dataMtx(1+1, 6+1, 1);
+          // Row 3
+          H.set_dataMtx(2+1, 0+1, 0); H.set_dataMtx(2+1, 1+1, 0); H.set_dataMtx(2+1, 2+1, 1);
+          H.set_dataMtx(2+1, 3+1, 1); H.set_dataMtx(2+1, 4+1, 1); H.set_dataMtx(2+1, 5+1, 0);
+          H.set_dataMtx(2+1, 6+1, 1);
+
+          // Multiply H with encoded word
+          for(int wc=encoded.size()/7; wc>0; wc--){
+              dataSet syndrome;
+              syndrome.rekeep_dataMtx(3, 1);
+
+              //
+              for(int i=0; i<3; i++){
+                  double val=0.0;
+                  for(int j=0; j<7; j++){
+                      // grab values and multiply together
+                      cout<<"encoded: "<<encoded[wc*7-1-j]<<" H: "<<H.get_dataMtx(i,j)<<endl;
+                      val+=encoded[wc*7-1-j]*H.get_dataMtx(i, j);
+                  }
+                  syndrome.set_dataMtx(i+1, 0+1, val);
+                  cout<<val<<endl;
+              }
+          }
+      }
+
       double sum=0.0;
       int power=(encoded.size()/7)*4-1;
-      cout<<endl;
       for(int i=encoded.size(); i>=0; i--){
           if(i%7==6){// && encoded[i]!=0){
               if(encoded[i]!=0)

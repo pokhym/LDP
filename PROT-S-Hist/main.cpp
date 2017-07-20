@@ -62,7 +62,7 @@ void test_basic_randomizer(){
 }
 
 int test_code(){
-    int val=11;
+    int val=10;
     vector<int> enc;
     double dec;
     enc=code(val);
@@ -70,23 +70,6 @@ int test_code(){
     cout<<val<<" "<<dec<<endl;
     cout<<endl;
 
-    val=1500;
-    enc=code(val);
-    dec=decode(enc);
-    cout<<val<<" "<<dec<<endl;
-    cout<<endl;
-
-    val=1234;
-    enc=code(val);
-    dec=decode(enc);
-    cout<<val<<" "<<dec<<endl;
-    cout<<endl;
-
-    val=1238747;
-    enc=code(val);
-    dec=decode(enc);
-    cout<<val<<" "<<dec<<endl;
-    cout<<endl;
     // code(5); // 0101
     // code(14);// 1110
     return 0;
@@ -110,35 +93,37 @@ int test_PROT_PP_S_Hist_PP(dataSet &data, double epsilon){
 
 
 int main(int argc, const char* argv[]){
-    if(argc!=4){
-        cout<<"usage: ./test path_to_data initial_m initial_n"<<endl;
-        return 0;
-    }
+    // if(argc!=4){
+    //     cout<<"usage: ./test path_to_data initial_m initial_n"<<endl;
+    //     return 0;
+    // }
     dataSet *test_data=new(dataSet);
 
-    cout<<"begin parsing data"<<endl;
-
-    // parse data
-    int lol;
-    cout<<stoi(argv[2])<<endl;
-    cout<<stoi(argv[3])<<endl;
-    lol=parseData(argv[1], *test_data, stoi(argv[2]), stoi(argv[3]));
-    if(lol==-1){
-        cout<<"failed to parse data you might want to check the path"<<endl;
-        return -1;
-    }
-
-    cout<<"parse end"<<endl;
-
-    int m=test_data->get_m();
-    int n=test_data->get_n();
-    cout<<"m (users): "<<m<<" n (attributes): "<<n<<endl;
-
-    cout<<endl;
+    // cout<<"begin parsing data"<<endl;
+    //
+    // // parse data
+    // int lol;
+    // cout<<stoi(argv[2])<<endl;
+    // cout<<stoi(argv[3])<<endl;
+    // lol=parseData(argv[1], *test_data, stoi(argv[2]), stoi(argv[3]));
+    // if(lol==-1){
+    //     cout<<"failed to parse data you might want to check the path"<<endl;
+    //     return -1;
+    // }
+    //
+    // cout<<"parse end"<<endl;
+    //
+    // int m=test_data->get_m();
+    // int n=test_data->get_n();
+    // cout<<"m (users): "<<m<<" n (attributes): "<<n<<endl;
+    //
+    // cout<<endl;
 
     // test_basic_randomizer();
-    // test_code();
-    test_PROT_PP_S_Hist_PP(*test_data, 0.5);
+    test_code();
+    // test_PROT_PP_S_Hist_PP(*test_data, 0.5);
+
+    delete test_data;
 
     return 0;
 }
