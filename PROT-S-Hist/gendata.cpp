@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 
-#define SCALAR 17
+#define SCALAR 111
 
 using namespace std;
 

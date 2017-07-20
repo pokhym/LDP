@@ -32,18 +32,29 @@ double MSE(vector<double> avg_real, vector<double> avg_est){
 
 
 int main(int argc, const char* argv[]){
+    if(argc<4 || argc>5){
+        cout<<"usage: ./test path_to_data initial_m initial_n"<<endl;
+	cout<<"usage: ./test path_to_data initial_m initial_n epsilon"<<endl;
+        cout<<argc<<endl;
+        return 0;
+    }
     double sum=0.0;
     double avg_mse=0.0;
     int m;
     int n;
+    int rep;
     double epsilon=0.1;
-    for(int o=0; o<10; o++){
 
+    // case for one round
+    if(argc==5){
+        rep=0;
+    }
+    else
+	rep=10;
+
+    for(int o=0; o<(rep+1); o++){
+	if(o==0){epsilon=3.2;}
         for(int p=0; p<20; p++){
-            if(argc!=4){
-                cout<<"usage: ./test path_to_data initial_m initial_n"<<endl;
-                return 0;
-            }
             dataSet *test_data=new(dataSet);
 
             // cout<<"begin parsing data"<<endl;
@@ -129,10 +140,11 @@ int main(int argc, const char* argv[]){
             // cout<<endl;
 
             double mse=MSE(avg_real, avg);
-            // cout<<"MSE: "<<mse<<endl;
+            cout<<"MSE: "<<mse<<endl;
 
             sum=sum+mse;
             avg_mse=sum/(p+1);
+            cout<<"running average: "<<avg_mse<<endl;
 
             cout<<".";
             delete test_data;

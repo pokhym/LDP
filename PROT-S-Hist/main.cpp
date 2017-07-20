@@ -62,10 +62,31 @@ void test_basic_randomizer(){
 }
 
 int test_code(){
-    vector<int> res(10, 0.0);
-    // res=code(11); // 1101
+    int val=11;
+    vector<int> enc;
+    double dec;
+    enc=code(val);
+    dec=decode(enc);
+    cout<<val<<" "<<dec<<endl;
+    cout<<endl;
 
-    // decode(res);
+    val=1500;
+    enc=code(val);
+    dec=decode(enc);
+    cout<<val<<" "<<dec<<endl;
+    cout<<endl;
+
+    val=1234;
+    enc=code(val);
+    dec=decode(enc);
+    cout<<val<<" "<<dec<<endl;
+    cout<<endl;
+
+    val=1238747;
+    enc=code(val);
+    dec=decode(enc);
+    cout<<val<<" "<<dec<<endl;
+    cout<<endl;
     // code(5); // 0101
     // code(14);// 1110
     return 0;
