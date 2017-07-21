@@ -62,13 +62,14 @@ void test_basic_randomizer(){
 }
 
 int test_code(){
-    int val=10;
-    vector<int> enc;
-    double dec;
-    enc=code(val);
-    dec=decode(enc);
-    cout<<val<<" "<<dec<<endl;
-    cout<<endl;
+    for(int val=0; val<20; val++){
+        vector<int> enc;
+        double dec;
+        enc=code(val);
+        dec=decode(enc);
+        cout<<val<<" "<<dec<<endl;
+        cout<<endl;
+    }
 
     // code(5); // 0101
     // code(14);// 1110

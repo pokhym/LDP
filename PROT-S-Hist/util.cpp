@@ -281,105 +281,102 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
   */
   double decode(vector<int> encoded){
       cout<<"decode"<<endl;
-      // check parity bits to see if they match
-      int counter=encoded.size()/7; // used to mark how many parts of 7
-      // parity bits in 2 1 0 idx
-      int r_p3, r_p2, r_p1, c_p1, c_p2, c_p3;
 
-      for(int i=encoded.size()-1; i>=0; i--){
-          if(i%7==2){
-              r_p3=encoded[i];
-              c_p3=(encoded[counter*7]+encoded[counter*7-1]+encoded[counter-3])%2;
-          }
-          if(i%7==1){
-              r_p2=encoded[i];
-              c_p2=(encoded[counter*7]+encoded[counter*7-2]+encoded[counter-3])%2;
-          }
-          if(i%7==0){
-              r_p1=encoded[i];
-              c_p1=(encoded[counter*7-1]+encoded[counter*7-2]+encoded[counter-3])%2;
-              counter--;
-          }
-          // double check parity bits
-          // p1 = d2 + d3 + d4
-          // p2 = d1 + d3 + d4
-          // p3 = d1 + d2 + d4
+      // force 1011011
+      // encoded[0]=1; encoded[1]=0; encoded[2]=1; encoded[3]=1; encoded[4]=0; encoded[5]=1; encoded[6]=1;
+
+      for(int i=0; i<(int)encoded.size(); i++){
           cout<<encoded[i];
       }
       cout<<endl;
+      // check parity bits to see if they match
+      int counter=encoded.size()/7; // used to mark how many parts of 7
 
-      if(1){//r_p3!=c_p3 || r_p2!=c_p2 || r_p1!=c_p1){ // some of the parity bits are wrong fix them
-          // create a parity check matrix and solve for the syndrome
-          // Row 1: Contains 1 in the first parity bit position and the bits used to calculate parity
-          // Row 2: Contains 1 in the second parity bit position and the bits used to calculate parity
-          // Row 3: Contains 1 in the third partiy bit position and the bits used to calculate parity
-          //
-          //     | 1 0 0 0 1 1 1 |
-          // H = | 0 1 0 1 0 1 1 |
-          //     | 0 0 1 1 1 0 1 |
-          //
-          // H*encode= 3x1 matrix of syndrome
-          // if syndrome all 0 then error free
-          // else flipping the encoded bit that is in the position of the column in [H] that matches the syndrome will result in a valid code word
-          dataSet H;
-          H.rekeep_dataMtx(3, 7);
-          // Row 1
-          H.set_dataMtx(0+1, 0+1, 1); H.set_dataMtx(0+1, 1+1, 0); H.set_dataMtx(0+1, 2+1, 0);
-          H.set_dataMtx(0+1, 3+1, 0); H.set_dataMtx(0+1, 4+1, 1); H.set_dataMtx(0+1, 5+1, 1);
-          H.set_dataMtx(0+1, 6+1, 1);
-          // Row 2
-          H.set_dataMtx(1+1, 0+1, 0); H.set_dataMtx(1+1, 1+1, 1); H.set_dataMtx(1+1, 2+1, 0);
-          H.set_dataMtx(1+1, 3+1, 1); H.set_dataMtx(1+1, 4+1, 0); H.set_dataMtx(1+1, 5+1, 1);
-          H.set_dataMtx(1+1, 6+1, 1);
-          // Row 3
-          H.set_dataMtx(2+1, 0+1, 0); H.set_dataMtx(2+1, 1+1, 0); H.set_dataMtx(2+1, 2+1, 1);
-          H.set_dataMtx(2+1, 3+1, 1); H.set_dataMtx(2+1, 4+1, 1); H.set_dataMtx(2+1, 5+1, 0);
-          H.set_dataMtx(2+1, 6+1, 1);
+      // create a parity check matrix and solve for the syndrome
+      // Row 1: Contains 1 in the first parity bit position and the bits used to calculate parity
+      // Row 2: Contains 1 in the second parity bit position and the bits used to calculate parity
+      // Row 3: Contains 1 in the third partiy bit position and the bits used to calculate parity
+      //
+      //     | 1 0 0 0 1 1 1 |
+      // H = | 0 1 0 1 0 1 1 |
+      //     | 0 0 1 1 1 0 1 |
+      //
+      // H*encode= 3x1 matrix of syndrome
+      // if syndrome all 0 then error free
+      // else flipping the encoded bit that is in the position of the column in [H] that matches the syndrome will result in a valid code word
+      dataSet H;
+      H.rekeep_dataMtx(3, 7);
+      // Row 1
+      H.set_dataMtx(0+1, 0+1, 1); H.set_dataMtx(0+1, 1+1, 0); H.set_dataMtx(0+1, 2+1, 0);
+      H.set_dataMtx(0+1, 3+1, 0); H.set_dataMtx(0+1, 4+1, 1); H.set_dataMtx(0+1, 5+1, 1);
+      H.set_dataMtx(0+1, 6+1, 1);
+      // Row 2
+      H.set_dataMtx(1+1, 0+1, 0); H.set_dataMtx(1+1, 1+1, 1); H.set_dataMtx(1+1, 2+1, 0);
+      H.set_dataMtx(1+1, 3+1, 1); H.set_dataMtx(1+1, 4+1, 0); H.set_dataMtx(1+1, 5+1, 1);
+      H.set_dataMtx(1+1, 6+1, 1);
+      // Row 3
+      H.set_dataMtx(2+1, 0+1, 0); H.set_dataMtx(2+1, 1+1, 0); H.set_dataMtx(2+1, 2+1, 1);
+      H.set_dataMtx(2+1, 3+1, 1); H.set_dataMtx(2+1, 4+1, 1); H.set_dataMtx(2+1, 5+1, 0);
+      H.set_dataMtx(2+1, 6+1, 1);
 
-          // Multiply H with encoded word
-          for(int wc=encoded.size()/7; wc>0; wc--){
-              dataSet syndrome;
-              syndrome.rekeep_dataMtx(3, 1);
+      // Multiply H with encoded word
+      dataSet syndrome;
+      syndrome.rekeep_dataMtx(3, 1); // one row for each bit
+      double sum=0.0; // used to keep track of the sum we need to return the decoded value as
+      int pow_count=0; // used to count the powers of two we're adding together
+      for(int wc=0; wc<(int)encoded.size()/7; wc++){
+          // H*encode is to create the syndrome
+          // 3 x 7 * 7 x 1 -> 3x1
+          int temp;
+          temp=H.get_dataMtx(0, 0)*encoded[wc*7+0]+H.get_dataMtx(0, 1)*encoded[wc*7+1]
+            +H.get_dataMtx(0, 2)*encoded[wc*7+2]+H.get_dataMtx(0, 3)*encoded[wc*7+3]
+            +H.get_dataMtx(0, 4)*encoded[wc*7+4]+H.get_dataMtx(0, 5)*encoded[wc*7+5]
+            +H.get_dataMtx(0, 6)*encoded[wc*7+6];
+          temp=temp%2;
+          syndrome.set_dataMtx(0+1, 0+1, temp);
 
-              //
-              for(int i=0; i<3; i++){
-                  double val=0.0;
-                  for(int j=0; j<7; j++){
-                      // grab values and multiply together
-                      cout<<"encoded: "<<encoded[wc*7-1-j]<<" H: "<<H.get_dataMtx(i,j)<<endl;
-                      val+=encoded[wc*7-1-j]*H.get_dataMtx(i, j);
+          temp=H.get_dataMtx(1, 0)*encoded[wc*7+0]+H.get_dataMtx(1, 1)*encoded[wc*7+1]
+            +H.get_dataMtx(1, 2)*encoded[wc*7+2]+H.get_dataMtx(1, 3)*encoded[wc*7+3]
+            +H.get_dataMtx(1, 4)*encoded[wc*7+4]+H.get_dataMtx(1, 5)*encoded[wc*7+5]
+            +H.get_dataMtx(1, 6)*encoded[wc*7+6];
+          temp=temp%2;
+          syndrome.set_dataMtx(1+1, 0+1, temp);
+
+          temp=H.get_dataMtx(2, 0)*encoded[wc*7+0]+H.get_dataMtx(2, 1)*encoded[wc*7+1]
+            +H.get_dataMtx(2, 2)*encoded[wc*7+2]+H.get_dataMtx(2, 3)*encoded[wc*7+3]
+            +H.get_dataMtx(2, 4)*encoded[wc*7+4]+H.get_dataMtx(2, 5)*encoded[wc*7+5]
+            +H.get_dataMtx(2, 6)*encoded[wc*7+6];
+          temp=temp%2;
+          syndrome.set_dataMtx(2+1, 0+1, temp);
+
+          // do we have errors? if so correct
+          if(syndrome.get_dataMtx(0, 0)!=0 || syndrome.get_dataMtx(1, 0)!=0 || syndrome.get_dataMtx(2, 0)!=0){
+              // if the columns dont sum to zero then we need to flip that bit
+              int bit_col;
+              for(int a=0; a<7; a++){
+                  int col_sum=0;
+                  col_sum+=H.get_dataMtx(0, a)*encoded[wc*7+a]+H.get_dataMtx(1, a)*encoded[wc*7+a]
+                    +H.get_dataMtx(2, a)*encoded[wc*7+a];
+                  if(col_sum>0){
+                      bit_col=a; // this is now the column we need to fix
                   }
-                  syndrome.set_dataMtx(i+1, 0+1, val);
-                  cout<<val<<endl;
               }
+              if(encoded[wc*7+bit_col]==0){encoded[wc*7+bit_col]=1;}
+              else{encoded[wc*7+bit_col]=0;}
+          }
+          // else proceed
+          for(int p=3; p>=0; p--){
+              sum+=pow(2, pow_count)*encoded[wc*7+3+p]; // word_offset+parity_offset+offset
+              pow_count++;
           }
       }
 
-      double sum=0.0;
-      int power=(encoded.size()/7)*4-1;
-      for(int i=encoded.size(); i>=0; i--){
-          if(i%7==6){// && encoded[i]!=0){
-              if(encoded[i]!=0)
-              sum+=pow(2,power);
-              power--;
-          }
-          if(i%7==5){// && encoded[i]!=0){
-              if(encoded[i]!=0)
-              sum+=pow(2,power);
-              power--;
-          }
-          if(i%7==4){// && encoded[i]!=0){
-              if(encoded[i]!=0)
-              sum+=pow(2,power);
-              power--;
-          }
-          if(i%7==3){// && encoded[i]!=){
-              if(encoded[i]!=0)
-              sum+=pow(2,power);
-              power--;
-          }
-      }
-      cout<<endl;
+    //   cout<<"post syndrome"<<endl;
+    //   for(int i=0; i<(int)encoded.size(); i++){
+    //       cout<<encoded[i];
+    //   }
+    //   cout<<endl;
+
       return sum;
   }
 
