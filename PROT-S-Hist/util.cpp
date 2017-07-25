@@ -7,7 +7,7 @@
 
 #define TAB 0x09
 #define LARGENUMBER 9999999999
-int m_max=0; // set number of bits of R
+int m_max=7; // set number of bits of R
 using namespace std;
 default_random_engine gen(time(0));
 
@@ -280,15 +280,6 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
   * OUTPUT: The original number which was encoded using the
   */
   double decode(vector<int> encoded){
-      cout<<"decode"<<endl;
-
-      // force 1011011
-      // encoded[0]=1; encoded[1]=0; encoded[2]=1; encoded[3]=1; encoded[4]=0; encoded[5]=1; encoded[6]=1;
-
-      for(int i=0; i<(int)encoded.size(); i++){
-          cout<<encoded[i];
-      }
-      cout<<endl;
       // check parity bits to see if they match
       int counter=encoded.size()/7; // used to mark how many parts of 7
 
@@ -304,20 +295,20 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
       // H*encode= 3x1 matrix of syndrome
       // if syndrome all 0 then error free
       // else flipping the encoded bit that is in the position of the column in [H] that matches the syndrome will result in a valid code word
-      dataSet H;
-      H.rekeep_dataMtx(3, 7);
+      dataSet *H=new(dataSet);
+      H->rekeep_dataMtx(3, 7);
       // Row 1
-      H.set_dataMtx(0+1, 0+1, 1); H.set_dataMtx(0+1, 1+1, 0); H.set_dataMtx(0+1, 2+1, 0);
-      H.set_dataMtx(0+1, 3+1, 0); H.set_dataMtx(0+1, 4+1, 1); H.set_dataMtx(0+1, 5+1, 1);
-      H.set_dataMtx(0+1, 6+1, 1);
+      H->set_dataMtx(0+1, 0+1, 1); H->set_dataMtx(0+1, 1+1, 0); H->set_dataMtx(0+1, 2+1, 0);
+      H->set_dataMtx(0+1, 3+1, 0); H->set_dataMtx(0+1, 4+1, 1); H->set_dataMtx(0+1, 5+1, 1);
+      H->set_dataMtx(0+1, 6+1, 1);
       // Row 2
-      H.set_dataMtx(1+1, 0+1, 0); H.set_dataMtx(1+1, 1+1, 1); H.set_dataMtx(1+1, 2+1, 0);
-      H.set_dataMtx(1+1, 3+1, 1); H.set_dataMtx(1+1, 4+1, 0); H.set_dataMtx(1+1, 5+1, 1);
-      H.set_dataMtx(1+1, 6+1, 1);
+      H->set_dataMtx(1+1, 0+1, 0); H->set_dataMtx(1+1, 1+1, 1); H->set_dataMtx(1+1, 2+1, 0);
+      H->set_dataMtx(1+1, 3+1, 1); H->set_dataMtx(1+1, 4+1, 0); H->set_dataMtx(1+1, 5+1, 1);
+      H->set_dataMtx(1+1, 6+1, 1);
       // Row 3
-      H.set_dataMtx(2+1, 0+1, 0); H.set_dataMtx(2+1, 1+1, 0); H.set_dataMtx(2+1, 2+1, 1);
-      H.set_dataMtx(2+1, 3+1, 1); H.set_dataMtx(2+1, 4+1, 1); H.set_dataMtx(2+1, 5+1, 0);
-      H.set_dataMtx(2+1, 6+1, 1);
+      H->set_dataMtx(2+1, 0+1, 0); H->set_dataMtx(2+1, 1+1, 0); H->set_dataMtx(2+1, 2+1, 1);
+      H->set_dataMtx(2+1, 3+1, 1); H->set_dataMtx(2+1, 4+1, 1); H->set_dataMtx(2+1, 5+1, 0);
+      H->set_dataMtx(2+1, 6+1, 1);
 
       // Multiply H with encoded word
       dataSet syndrome;
@@ -328,24 +319,24 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
           // H*encode is to create the syndrome
           // 3 x 7 * 7 x 1 -> 3x1
           int temp;
-          temp=H.get_dataMtx(0, 0)*encoded[wc*7+0]+H.get_dataMtx(0, 1)*encoded[wc*7+1]
-            +H.get_dataMtx(0, 2)*encoded[wc*7+2]+H.get_dataMtx(0, 3)*encoded[wc*7+3]
-            +H.get_dataMtx(0, 4)*encoded[wc*7+4]+H.get_dataMtx(0, 5)*encoded[wc*7+5]
-            +H.get_dataMtx(0, 6)*encoded[wc*7+6];
+          temp=H->get_dataMtx(0, 0)*encoded[wc*7+0]+H->get_dataMtx(0, 1)*encoded[wc*7+1]
+            +H->get_dataMtx(0, 2)*encoded[wc*7+2]+H->get_dataMtx(0, 3)*encoded[wc*7+3]
+            +H->get_dataMtx(0, 4)*encoded[wc*7+4]+H->get_dataMtx(0, 5)*encoded[wc*7+5]
+            +H->get_dataMtx(0, 6)*encoded[wc*7+6];
           temp=temp%2;
           syndrome.set_dataMtx(0+1, 0+1, temp);
 
-          temp=H.get_dataMtx(1, 0)*encoded[wc*7+0]+H.get_dataMtx(1, 1)*encoded[wc*7+1]
-            +H.get_dataMtx(1, 2)*encoded[wc*7+2]+H.get_dataMtx(1, 3)*encoded[wc*7+3]
-            +H.get_dataMtx(1, 4)*encoded[wc*7+4]+H.get_dataMtx(1, 5)*encoded[wc*7+5]
-            +H.get_dataMtx(1, 6)*encoded[wc*7+6];
+          temp=H->get_dataMtx(1, 0)*encoded[wc*7+0]+H->get_dataMtx(1, 1)*encoded[wc*7+1]
+            +H->get_dataMtx(1, 2)*encoded[wc*7+2]+H->get_dataMtx(1, 3)*encoded[wc*7+3]
+            +H->get_dataMtx(1, 4)*encoded[wc*7+4]+H->get_dataMtx(1, 5)*encoded[wc*7+5]
+            +H->get_dataMtx(1, 6)*encoded[wc*7+6];
           temp=temp%2;
           syndrome.set_dataMtx(1+1, 0+1, temp);
 
-          temp=H.get_dataMtx(2, 0)*encoded[wc*7+0]+H.get_dataMtx(2, 1)*encoded[wc*7+1]
-            +H.get_dataMtx(2, 2)*encoded[wc*7+2]+H.get_dataMtx(2, 3)*encoded[wc*7+3]
-            +H.get_dataMtx(2, 4)*encoded[wc*7+4]+H.get_dataMtx(2, 5)*encoded[wc*7+5]
-            +H.get_dataMtx(2, 6)*encoded[wc*7+6];
+          temp=H->get_dataMtx(2, 0)*encoded[wc*7+0]+H->get_dataMtx(2, 1)*encoded[wc*7+1]
+            +H->get_dataMtx(2, 2)*encoded[wc*7+2]+H->get_dataMtx(2, 3)*encoded[wc*7+3]
+            +H->get_dataMtx(2, 4)*encoded[wc*7+4]+H->get_dataMtx(2, 5)*encoded[wc*7+5]
+            +H->get_dataMtx(2, 6)*encoded[wc*7+6];
           temp=temp%2;
           syndrome.set_dataMtx(2+1, 0+1, temp);
 
@@ -355,8 +346,8 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
               int bit_col;
               for(int a=0; a<7; a++){
                   int col_sum=0;
-                  col_sum+=H.get_dataMtx(0, a)*encoded[wc*7+a]+H.get_dataMtx(1, a)*encoded[wc*7+a]
-                    +H.get_dataMtx(2, a)*encoded[wc*7+a];
+                  col_sum+=H->get_dataMtx(0, a)*encoded[wc*7+a]+H->get_dataMtx(1, a)*encoded[wc*7+a]
+                    +H->get_dataMtx(2, a)*encoded[wc*7+a];
                   if(col_sum>0){
                       bit_col=a; // this is now the column we need to fix
                   }
@@ -377,6 +368,7 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
     //   }
     //   cout<<endl;
 
+      delete H;
       return sum;
   }
 
@@ -387,15 +379,23 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
  * NOTE: the input values are always going to be {0, 1/sqrt(x.size()), -1/sqrt(x.size())}
  * OUTPUTS: vector double same size as input x but with only one nonzero vlaue
  */
-pair<int, double> R(std::vector<int> x, double epsilon){
+pair<int, double> R(std::vector<int> &x, double epsilon){
     if(x.size()<=0 || epsilon<=0){
         return pair<int, double>(-1,-1);
     }
 
     // BEGIN ALGORITHM
-    int m=m_max; //x.size();
+    int m=m_max-1; //x.size();
     // time_t timer; // TODO: figure how to make this random
-    static default_random_engine gen(time(0));
+    static default_random_engine gen;//(time(0));
+    static default_random_engine gen2;
+
+    // VERIFY THAT THE VECTOR IS COMPLETELY EMPTY OR NOT
+    int flag=0; // if flag==1 then we have non zero values
+    for(int i=0; i<(int)x.size(); i++){
+        if(x[i]!=0)
+            flag=1;
+    }
 
     //////////////////////////////  STEP 1
     // sample j from m uniformally at random where j is an index into
@@ -404,7 +404,7 @@ pair<int, double> R(std::vector<int> x, double epsilon){
     int j=idx_gen(gen);
 
     //////////////////////////////  STEP 2
-    // if x[j]!=0
+    // if x=/=0
     // randomize jth input to value to {-1/sqrt(m), 1/sqrt(m)}
     // with the following distribution
     //               exp(epsilon)+1
@@ -420,10 +420,10 @@ pair<int, double> R(std::vector<int> x, double epsilon){
     double zj;
     double c_epsilon=(exp(epsilon)+1)/(exp(epsilon)-1);
 
-    if(x[j]!=0){
+    if(flag){
         bernoulli_distribution zj_chooser(exp(epsilon)/(exp(epsilon)+1));
 
-        if(zj_chooser(gen)){// positive choice
+        if(zj_chooser(gen2)){// positive choice
             zj=c_epsilon*m*x[j];
         }
         else{ // negative choice
@@ -448,8 +448,6 @@ pair<int, double> R(std::vector<int> x, double epsilon){
     pair<int, double> result; // first=idx, second=value
     result.first=j;
     result.second=zj;
-    vector<double> z_(m, 0.0);
-
     return result;
 }
 
@@ -510,7 +508,7 @@ pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon){
         if(data.get_dataMtx(i, 0)!=0){ // code
             // NOTE: BROKEN CODE?
             vector<int> c=code(data.get_dataMtx(i,0));
-            if((int)c.size()>m_max){m_max=c.size();}
+            //if((int)c.size()>m_max){m_max=c.size();}
             //cout<<c.size()<<" "<<m_max<<endl;
             zi=R(c, epsilon);
             zi_temp.push_back(zi);
@@ -526,15 +524,14 @@ pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon){
     ///////////////////////// STEP 2
     // 5: Server computes z_bar=(1/n)summation(1 to n)zi
     // now actually store all the data in a zi vector
+    // zi.first is idx, zi.second is value
+    // zi is stored in the zi_temp vector
     vector<double> z(m_max, 0.0);
-    int n=0;
     for(int i=0; i<(int)zi_temp.size(); i++){
         z[zi_temp[i].first]=z[zi_temp[i].first]+zi_temp[i].second;
-        n++;
     }
     for(int i=0; i<(int)m_max; i++){
-        z[i]=z[i]/n; // this should be == zi_temp.size()
-        //cout<<z[i];
+        z[i]=z[i]/zi_temp.size(); // this should be == zi_temp.size()
     }
 
     ///////////////////////// STEP 3
@@ -554,8 +551,28 @@ pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon){
 
     ///////////////////////// STEP 4
     // decode y
-    cout<<y.size()<<endl;
     result.first=decode(y);
+
+    vector<double> y_d(z.size(), 0.0);
+    vector<int> v_hat=code(result.first);
+    vector<double> v_hat_d(z.size(), 0.0);
+    for(int i=0; i<(int)z.size(); i++){
+        if(z[i]>0)
+            y_d[i]=1/sqrt(m_max);
+        else if(z[i]<=0)
+            y_d[i]=-1/sqrt(m_max);
+        if(v_hat[i]==1)
+            v_hat_d[i]=1/sqrt(m_max);
+        else if(v_hat[i]==0)
+            v_hat_d[i]=-1.0/sqrt(m_max);
+
+    }
+
+    double freq=0.0;
+    for(int i=0; i<(int)v_hat.size(); i++){
+        freq+=v_hat_d[i]*y_d[i];
+    }
+    result.second=freq;
 
     return result;
 }

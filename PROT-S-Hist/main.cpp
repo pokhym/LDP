@@ -71,58 +71,79 @@ int test_code(){
         cout<<endl;
     }
 
-    // code(5); // 0101
-    // code(14);// 1110
     return 0;
 }
 
 int test_PROT_PP_S_Hist_PP(dataSet &data, double epsilon){
-    pair<double, double> ret;
-    int n=1000;
-    double sum=0;
-    for(int i=0; i<n; i++){
-        cout<<"iteration: "<<i<<" desired value: "<<"10"<<endl;
-        ret=PROT_PP_S_Hist_pp(data, epsilon);
-        sum=sum+ret.first;
-        cout<<"running average: "<<(double)sum/(i+1)<<endl;
-        cout<<endl;
+    int real=0;
+    int i=0;
+    while(1){
+        if(data.get_dataMtx(i,0)!=0){
+            real=data.get_dataMtx(i, 0);
+            break;
+        }
+        i++;
     }
-    cout<<(double)sum/n<<endl;
+    pair<double, double> ret;
+    int n=100;
+    double sum=0;
+    double freq_sum=0.0;
+    for(int j=0; j<5; j++){
+        if(j==0){epsilon=0.05;}
+        if(j==1){epsilon=0.1;}
+        if(j==2){epsilon=0.5;}
+        if(j==3){epsilon=1;}
+        if(j==4){epsilon=5;}
+        sum=0.0; freq_sum=0.0;
+        for(int i=0; i<n; i++){
+            ret=PROT_PP_S_Hist_pp(data, epsilon);
+            sum=sum+ret.first;
+            freq_sum=freq_sum+ret.second;
+            if(i%20==0){
+                cout<<"iteration: "<<i<<" desired value: "<<real<<" desired frequency: 0.3"<<endl;
+                cout<<"m: "<<data.get_m()<<" n: "<<data.get_n()<<" epsilon: "<<epsilon<<endl;
+                cout<<"heavy hitter running average: "<<(double)sum/(i+1)<<endl;
+                cout<<"freq running average: "<<(double)freq_sum/(i+1)<<endl;
+                cout<<endl;
+            }
+        }
+        cout<<"avgerage final: "<<(double)sum/n<<endl;
+    }
 
     return 0;
 }
 
 
 int main(int argc, const char* argv[]){
-    // if(argc!=4){
-    //     cout<<"usage: ./test path_to_data initial_m initial_n"<<endl;
-    //     return 0;
-    // }
+    if(argc!=4){
+        cout<<"usage: ./test path_to_data initial_m initial_n"<<endl;
+        return 0;
+    }
     dataSet *test_data=new(dataSet);
 
-    // cout<<"begin parsing data"<<endl;
-    //
-    // // parse data
-    // int lol;
-    // cout<<stoi(argv[2])<<endl;
-    // cout<<stoi(argv[3])<<endl;
-    // lol=parseData(argv[1], *test_data, stoi(argv[2]), stoi(argv[3]));
-    // if(lol==-1){
-    //     cout<<"failed to parse data you might want to check the path"<<endl;
-    //     return -1;
-    // }
-    //
-    // cout<<"parse end"<<endl;
-    //
-    // int m=test_data->get_m();
-    // int n=test_data->get_n();
-    // cout<<"m (users): "<<m<<" n (attributes): "<<n<<endl;
-    //
-    // cout<<endl;
+    cout<<"begin parsing data"<<endl;
+
+    // parse data
+    int lol;
+    cout<<stoi(argv[2])<<endl;
+    cout<<stoi(argv[3])<<endl;
+    lol=parseData(argv[1], *test_data, stoi(argv[2]), stoi(argv[3]));
+    if(lol==-1){
+        cout<<"failed to parse data you might want to check the path"<<endl;
+        return -1;
+    }
+
+    cout<<"parse end"<<endl;
+
+    int m=test_data->get_m();
+    int n=test_data->get_n();
+    cout<<"m (users): "<<m<<" n (attributes): "<<n<<endl;
+
+    cout<<endl;
 
     // test_basic_randomizer();
-    test_code();
-    // test_PROT_PP_S_Hist_PP(*test_data, 0.5);
+    // test_code();
+    test_PROT_PP_S_Hist_PP(*test_data, 0.05);
 
     delete test_data;
 

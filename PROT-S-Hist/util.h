@@ -18,7 +18,7 @@ std::vector<int> code(int input);
 
 double decode(std::vector<int> encoded);
 
-std::pair<int, double> R(std::vector<int> x, double epsilon);
+std::pair<int, double> R(std::vector<int> &x, double epsilon);
 
 dataSet GenProj(double m, int d);
 

@@ -25,6 +25,7 @@ double MSE(vector<double> avg_real, vector<double> avg_est){
     int n=avg_real.size();
     double total=0.0;
     for(int i=0; i<n; i++){
+        cout<<"total MSE: "<<total<<endl;
         total=total+(avg_real[i]-avg_est[i])*(avg_real[i]-avg_est[i]);
     }
     return (double)total/n;
@@ -50,10 +51,17 @@ int main(int argc, const char* argv[]){
         rep=0;
     }
     else
-	rep=10;
+	rep=7;
 
-    for(int o=0; o<(rep+1); o++){
-	if(o==0){epsilon=3.2;}
+    for(int o=0; o<(rep); o++){
+	if(o==0){epsilon=0.05;}
+	else if(o==1){epsilon=0.1;}
+	else if(o==2){epsilon=0.2;}
+	else if(o==3){epsilon=0.4;}
+	else if(o==4){epsilon=0.8;}
+	else if(o==5){epsilon=1.6;}
+	else if(o==6){epsilon=3.2;}
+
         for(int p=0; p<20; p++){
             dataSet *test_data=new(dataSet);
 
@@ -140,13 +148,12 @@ int main(int argc, const char* argv[]){
             // cout<<endl;
 
             double mse=MSE(avg_real, avg);
-            cout<<"MSE: "<<mse<<endl;
+            //cout<<"MSE: "<<mse<<endl;
 
             sum=sum+mse;
             avg_mse=sum/(p+1);
-            cout<<"running average: "<<avg_mse<<endl;
+            //cout<<"running average("<<p+1<<"): "<<avg_mse<<endl;
 
-            cout<<".";
             delete test_data;
         }
         cout<<endl;
