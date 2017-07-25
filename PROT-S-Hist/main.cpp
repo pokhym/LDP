@@ -102,7 +102,7 @@ int test_PROT_PP_S_Hist_PP(dataSet &data, double epsilon){
     double sum=0;
     double freq_sum=0.0;
     for(int j=0; j<5; j++){
-        if(j==0){epsilon=0.5;}
+        if(j==0){epsilon=50.0;}
         if(j==1){epsilon=1.0;}
         if(j==2){epsilon=5.0;}
         if(j==3){epsilon=10.0;}

@@ -438,7 +438,7 @@ pair<int, double> R(std::vector<int> &x, double epsilon){
     double c_epsilon=(exp(epsilon)+1)/(exp(epsilon)-1);
 
     if(flag){
-        bernoulli_distribution zj_chooser(exp(epsilon)/(exp(epsilon)+1));
+        static bernoulli_distribution zj_chooser(exp(epsilon)/(exp(epsilon)+1));
 
         if(zj_chooser(gen2)){// positive choice
             zj=c_epsilon*(m+1)*x[j];
@@ -449,7 +449,7 @@ pair<int, double> R(std::vector<int> &x, double epsilon){
     }
     // else generate uniform bit z_j={c_epsilon*sqrt(m), -c_epsilon*sqrt(m)}
     else{
-        uniform_int_distribution<int> _0_1(0,1);
+        static uniform_int_distribution<int> _0_1(0,1);
         int res=_0_1(gen);
 
         if(res==0){
@@ -531,8 +531,10 @@ pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon){
             zi_temp.push_back(zi);
         }
         else{ // set 0
-            vector<int> c=code(0);
+            // vector<int> c=code(0);
+            vector<int> c(7, 0);
             zi=R(c, epsilon);
+            //cout<<zi.first<<" "<<zi.second<<endl;
             zi_temp.push_back(zi);
         }
         //cout<<"i: "<<i<<" "<<"zi (idx, val): "<<zi.first<<" "<<zi.second<<endl;
