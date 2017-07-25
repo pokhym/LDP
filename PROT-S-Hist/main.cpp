@@ -84,30 +84,44 @@ int test_PROT_PP_S_Hist_PP(dataSet &data, double epsilon){
         }
         i++;
     }
+    int total=0; int nonzero=0; int zero=0;
+    for(int i=0; i<data.get_m(); i++){
+        if(data.get_dataMtx(i, 0)!=0){
+            nonzero++;
+            total++;
+        }
+        else{
+            zero++;
+            total++;
+        }
+    }
+
+    double ratio=(double)nonzero/total;
     pair<double, double> ret;
     int n=100;
     double sum=0;
     double freq_sum=0.0;
     for(int j=0; j<5; j++){
-        if(j==0){epsilon=0.05;}
-        if(j==1){epsilon=0.1;}
-        if(j==2){epsilon=0.5;}
-        if(j==3){epsilon=1;}
-        if(j==4){epsilon=5;}
+        if(j==0){epsilon=0.5;}
+        if(j==1){epsilon=1.0;}
+        if(j==2){epsilon=5.0;}
+        if(j==3){epsilon=10.0;}
+        if(j==4){epsilon=15.0;}
         sum=0.0; freq_sum=0.0;
         for(int i=0; i<n; i++){
             ret=PROT_PP_S_Hist_pp(data, epsilon);
             sum=sum+ret.first;
             freq_sum=freq_sum+ret.second;
             if(i%20==0){
-                cout<<"iteration: "<<i<<" desired value: "<<real<<" desired frequency: 0.3"<<endl;
+                cout<<"iteration: "<<i<<" desired value: "<<real<<" desired frequency: "<<ratio<<endl;
                 cout<<"m: "<<data.get_m()<<" n: "<<data.get_n()<<" epsilon: "<<epsilon<<endl;
                 cout<<"heavy hitter running average: "<<(double)sum/(i+1)<<endl;
                 cout<<"freq running average: "<<(double)freq_sum/(i+1)<<endl;
                 cout<<endl;
             }
         }
-        cout<<"avgerage final: "<<(double)sum/n<<endl;
+        cout<<"average final: "<<(double)sum/n<<endl;
+        cout<<endl;
     }
 
     return 0;
