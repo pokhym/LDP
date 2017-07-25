@@ -341,19 +341,36 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
           syndrome.set_dataMtx(2+1, 0+1, temp);
 
           // do we have errors? if so correct
-          if(syndrome.get_dataMtx(0, 0)!=0 || syndrome.get_dataMtx(1, 0)!=0 || syndrome.get_dataMtx(2, 0)!=0){
-              // if the columns dont sum to zero then we need to flip that bit
-              int bit_col;
-              for(int a=0; a<7; a++){
-                  int col_sum=0;
-                  col_sum+=H->get_dataMtx(0, a)*encoded[wc*7+a]+H->get_dataMtx(1, a)*encoded[wc*7+a]
-                    +H->get_dataMtx(2, a)*encoded[wc*7+a];
-                  if(col_sum>0){
-                      bit_col=a; // this is now the column we need to fix
+          //int parity1=1; int parity2=1; int parity3=1; // used to mark which parity we chekced
+          int number_of_errors=syndrome.get_dataMtx(0,0)+syndrome.get_dataMtx(1, 0)+syndrome.get_dataMtx(2, 0);
+          int changed[7]; changed[3]=0; changed[4]=0; changed[5]=0; changed[6]=0;
+
+          for(int num_parity=0; num_parity<number_of_errors; num_parity++){
+              if(syndrome.get_dataMtx(0, 0)!=0 || syndrome.get_dataMtx(1, 0)!=0 || syndrome.get_dataMtx(2, 0)!=0){
+                  // if the columns dont sum to zero then we need to flip that bit
+                  int bit_col;
+
+                  // check which are summed to > 0
+                  for(int a=2; a<7; a++){
+                      if(changed[a]==0){
+                          int col_sum=0;
+                          col_sum+=H->get_dataMtx(0, a)*encoded[wc*7+a]+H->get_dataMtx(1, a)*encoded[wc*7+a]
+                            +H->get_dataMtx(2, a)*encoded[wc*7+a];
+                          if(col_sum>0){
+                              changed[a]=1;
+                              bit_col=a; // this is now the column we need to fix
+                          }
+                      }
+                  }
+
+                  // set the changed bits
+                  for(int changed_bits=2; changed_bits<7; changed_bits++){
+                      if(changed[changed_bits]!=0){
+                          if(encoded[wc*7+changed_bits]==0){encoded[wc*7+changed_bits]=1;}
+                          else{encoded[wc*7+changed_bits]=0;}
+                      }
                   }
               }
-              if(encoded[wc*7+bit_col]==0){encoded[wc*7+bit_col]=1;}
-              else{encoded[wc*7+bit_col]=0;}
           }
           // else proceed
           for(int p=3; p>=0; p--){
@@ -424,10 +441,10 @@ pair<int, double> R(std::vector<int> &x, double epsilon){
         bernoulli_distribution zj_chooser(exp(epsilon)/(exp(epsilon)+1));
 
         if(zj_chooser(gen2)){// positive choice
-            zj=c_epsilon*m*x[j];
+            zj=c_epsilon*(m+1)*x[j];
         }
         else{ // negative choice
-            zj=-c_epsilon*m*x[j];
+            zj=-c_epsilon*(m+1)*x[j];
         }
     }
     // else generate uniform bit z_j={c_epsilon*sqrt(m), -c_epsilon*sqrt(m)}
@@ -436,10 +453,10 @@ pair<int, double> R(std::vector<int> &x, double epsilon){
         int res=_0_1(gen);
 
         if(res==0){
-            zj=c_epsilon*sqrt(m);
+            zj=c_epsilon*sqrt(m+1);
         }
         else{
-            zj=c_epsilon*sqrt(m)*-1.0;
+            zj=c_epsilon*sqrt(m+1)*-1.0;
         }
     }
 
