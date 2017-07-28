@@ -6,3 +6,4 @@ https://arxiv.org/abs/1606.05053
 
 PROT-S-Hist from the following paper
 https://arxiv.org/abs/1504.04686
+	BCH Code: https://github.com/pjkundert/ezpwd-reed-solomon
