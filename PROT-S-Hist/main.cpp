@@ -2,8 +2,11 @@
 #include <iomanip>
 #include <vector>
 #include <string>
+#include <assert.h>
 #include "data.h"
 #include "util.h"
+#include "c++/ezpwd/bch"
+#include <array>
 
 using namespace std;
 
@@ -127,6 +130,26 @@ int test_PROT_PP_S_Hist_PP(dataSet &data, double epsilon){
     return 0;
 }
 
+int test_RS(){
+    ezpwd::BCH<255,239,2> bch_codec; // By Codeword, Payload and Correction capacities, exactly
+    std::vector<uint8_t> codeword = { 1,0,1,0,1,0,1,0 }; // 8 data
+
+    bch_codec.encode( codeword ); // + 2 parity added
+    for(int i=0; i<8; i++){cout<<(int)codeword[i];}cout<<endl;
+
+    codeword[0]=0;
+    for(int i=0; i<8; i++){cout<<(int)codeword[i];}cout<<endl;
+
+    int corrections = bch_codec.decode( codeword );
+    for(int i=0; i<8; i++){cout<<(int)codeword[i];}cout<<endl;
+
+    assert( corrections >= 0 ); // fail if BCH decode failed
+    codeword.resize( codeword.size() - bch_codec.ecc_bytes() ); // discard parity
+
+
+    return 0;
+}
+
 
 int main(int argc, const char* argv[]){
     if(argc!=4){
@@ -157,7 +180,8 @@ int main(int argc, const char* argv[]){
 
     // test_basic_randomizer();
     // test_code();
-    test_PROT_PP_S_Hist_PP(*test_data, 0.05);
+    // test_PROT_PP_S_Hist_PP(*test_data, 0.05);
+    test_RS();
 
     delete test_data;
 

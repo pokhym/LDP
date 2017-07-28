@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 
-#define SCALAR 3
+#define SCALAR 13
 
 using namespace std;
 
@@ -13,7 +13,7 @@ int main()
   ofstream myfile;
   myfile.open("data.txt");
 
-  const int rows=500000;
+  const int rows=1;
   const int cols=1;
 
   std::default_random_engine generator;

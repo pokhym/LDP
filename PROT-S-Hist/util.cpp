@@ -9,7 +9,7 @@
 #define LARGENUMBER 9999999999
 int m_max=7; // set number of bits of R
 using namespace std;
-default_random_engine gen(time(0));
+static default_random_engine gen;
 
 /* parseData
  * DESCRIPTION: Parses a comma separated list of data. Each column represents
@@ -341,36 +341,19 @@ pair<vector<double>, vector<double>> normalizeNeg1toPos1(dataSet &data, vector<d
           syndrome.set_dataMtx(2+1, 0+1, temp);
 
           // do we have errors? if so correct
-          //int parity1=1; int parity2=1; int parity3=1; // used to mark which parity we chekced
-          int number_of_errors=syndrome.get_dataMtx(0,0)+syndrome.get_dataMtx(1, 0)+syndrome.get_dataMtx(2, 0);
-          int changed[7]; changed[3]=0; changed[4]=0; changed[5]=0; changed[6]=0;
-
-          for(int num_parity=0; num_parity<number_of_errors; num_parity++){
-              if(syndrome.get_dataMtx(0, 0)!=0 || syndrome.get_dataMtx(1, 0)!=0 || syndrome.get_dataMtx(2, 0)!=0){
-                  // if the columns dont sum to zero then we need to flip that bit
-                  int bit_col;
-
-                  // check which are summed to > 0
-                  for(int a=2; a<7; a++){
-                      if(changed[a]==0){
-                          int col_sum=0;
-                          col_sum+=H->get_dataMtx(0, a)*encoded[wc*7+a]+H->get_dataMtx(1, a)*encoded[wc*7+a]
-                            +H->get_dataMtx(2, a)*encoded[wc*7+a];
-                          if(col_sum>0){
-                              changed[a]=1;
-                              bit_col=a; // this is now the column we need to fix
-                          }
-                      }
-                  }
-
-                  // set the changed bits
-                  for(int changed_bits=2; changed_bits<7; changed_bits++){
-                      if(changed[changed_bits]!=0){
-                          if(encoded[wc*7+changed_bits]==0){encoded[wc*7+changed_bits]=1;}
-                          else{encoded[wc*7+changed_bits]=0;}
-                      }
+          if(syndrome.get_dataMtx(0, 0)!=0 || syndrome.get_dataMtx(1, 0)!=0 || syndrome.get_dataMtx(2, 0)!=0){
+              // if the columns dont sum to zero then we need to flip that bit
+              int bit_col;
+              for(int a=0; a<7; a++){
+                  int col_sum=0;
+                  col_sum+=H->get_dataMtx(0, a)*encoded[wc*7+a]+H->get_dataMtx(1, a)*encoded[wc*7+a]
+                    +H->get_dataMtx(2, a)*encoded[wc*7+a];
+                  if(col_sum>0){
+                      bit_col=a; // this is now the column we need to fix
                   }
               }
+              if(encoded[wc*7+bit_col]==0){encoded[wc*7+bit_col]=1;}
+              else{encoded[wc*7+bit_col]=0;}
           }
           // else proceed
           for(int p=3; p>=0; p--){
@@ -403,22 +386,23 @@ pair<int, double> R(std::vector<int> &x, double epsilon){
 
     // BEGIN ALGORITHM
     int m=m_max-1; //x.size();
-    // time_t timer; // TODO: figure how to make this random
-    static default_random_engine gen;//(time(0));
-    static default_random_engine gen2;
+    // time_t timer;
+    // static default_random_engine gen;//(time(0));
+    // static default_random_engine gen2;
 
     // VERIFY THAT THE VECTOR IS COMPLETELY EMPTY OR NOT
     int flag=0; // if flag==1 then we have non zero values
     for(int i=0; i<(int)x.size(); i++){
-        if(x[i]!=0)
+        if(x[i]!=0){
             flag=1;
+        }
     }
 
     //////////////////////////////  STEP 1
     // sample j from m uniformally at random where j is an index into
     // the vector m thus having index value of 0 to m.size()-1
-    uniform_int_distribution<int> idx_gen(0, m);
-    int j=idx_gen(gen);
+    // uniform_int_distribution<int> idx_gen(0, m);
+    int j=rand()%m; // idx_gen(gen);
 
     //////////////////////////////  STEP 2
     // if x=/=0
@@ -440,11 +424,11 @@ pair<int, double> R(std::vector<int> &x, double epsilon){
     if(flag){
         bernoulli_distribution zj_chooser(exp(epsilon)/(exp(epsilon)+1));
 
-        if(zj_chooser(gen2)){// positive choice
-            zj=c_epsilon*(m+1)*x[j];
+        if(zj_chooser(gen)){// positive choice
+            zj=c_epsilon*sqrt(m+1);//c_epsilon*(m+1)*x[j];
         }
         else{ // negative choice
-            zj=-c_epsilon*(m+1)*x[j];
+            zj=-c_epsilon*sqrt(m+1);//-c_epsilon*(m+1)*x[j];
         }
     }
     // else generate uniform bit z_j={c_epsilon*sqrt(m), -c_epsilon*sqrt(m)}
@@ -513,7 +497,7 @@ dataSet PROT_FO(std::vector<double> v, double epsilon, double beta){
 pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon){
     pair<double, double> result; // return values, first is the value
                                 // second is the frequency
-
+    int _0=0; int _1=0; int total=0;
     ///////////////////////// STEP 1
     // 1: for Users i = 1 to n do
     // 2:   If vi =/= NOT, then user i encodes its item: xi = c(vi). Else, user i sets xi = 0.
@@ -523,20 +507,24 @@ pair<double, double> PROT_PP_S_Hist_pp(dataSet &data, double epsilon){
     pair<int,double> zi;
     for(int i=0; i<data.get_m(); i++){
         if(data.get_dataMtx(i, 0)!=0){ // code
-            // NOTE: BROKEN CODE?
             vector<int> c=code(data.get_dataMtx(i,0));
             //if((int)c.size()>m_max){m_max=c.size();}
             //cout<<c.size()<<" "<<m_max<<endl;
             zi=R(c, epsilon);
+            if(zi.second>0){_0++;total++;}
+            else{_1++;total++;}
             zi_temp.push_back(zi);
         }
         else{ // set 0
-            vector<int> c=code(0);
+            vector<int> c(7,0);
             zi=R(c, epsilon);
+            if(zi.second>0){_0++;total++;}
+            else{_1++;total++;}
             zi_temp.push_back(zi);
         }
         //cout<<"i: "<<i<<" "<<"zi (idx, val): "<<zi.first<<" "<<zi.second<<endl;
     }
+    cout<<"0%: "<<(double)_0/total<<" total: "<<total<<" 0: "<<_0<<endl;
 
     ///////////////////////// STEP 2
     // 5: Server computes z_bar=(1/n)summation(1 to n)zi
