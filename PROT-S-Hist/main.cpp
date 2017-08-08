@@ -7,6 +7,7 @@
 #include "util.h"
 #include "c++/ezpwd/bch"
 #include <array>
+#include <bitset>
 
 using namespace std;
 
@@ -131,21 +132,52 @@ int test_PROT_PP_S_Hist_PP(dataSet &data, double epsilon){
 }
 
 int test_RS(){
-    ezpwd::BCH<255,239,2> bch_codec; // By Codeword, Payload and Correction capacities, exactly
-    std::vector<uint8_t> codeword = { 1,0,1,0,1,0,1,0 }; // 8 data
+    srand(time(NULL));
+    double n=500; // number of users
+    double d=256; // num codewords
+    double m; // number of bits
+    double beta=.01;
+    double epsilon=1.0; // privacy
+    m=log2(d);
+    cout<<"m: "<<m<<endl;
+
+    ezpwd::BCH<255,191,8> bch_codec; // By Codeword, Payload and Correction capacities, exactly
+    std::vector<uint8_t> codeword(m,0); // m data bits
+
+    bitset<8> value=53;
+    cout<<"bitset: ";
+    for(int i=0; i<(int)value.size(); i++){
+        cout<<value[i];
+    }cout<<endl;
+
+    cout<<"reversed: ";
+    for(int i=0; i<m; i++){
+        codeword[i]=value[m-1-i];
+        cout<<(int)codeword[i];
+    }cout<<endl;
 
     bch_codec.encode( codeword ); // + 2 parity added
-    for(int i=0; i<8; i++){cout<<(int)codeword[i];}cout<<endl;
+    cout<<"encode: "<<codeword.size()<<" ";
+    for(int i=0; i<(int)codeword.size(); i++){cout<<(int)codeword[i];}cout<<endl;
 
-    codeword[0]=0;
-    for(int i=0; i<8; i++){cout<<(int)codeword[i];}cout<<endl;
+    int count=0;
+    for(int i=0; i<(int)codeword.size(); i++){
+        if(count<=8){
+            int j=rand()%codeword.size();
+            codeword[j]^=codeword[j];
+            count++;
+        }
+    }
+    cout<<"altered: "<<codeword.size()<<" ";
+    for(int i=0; i<(int) codeword.size(); i++){cout<<(int)codeword[i];}cout<<endl;
 
-    int corrections = bch_codec.decode( codeword );
-    for(int i=0; i<8; i++){cout<<(int)codeword[i];}cout<<endl;
+    bch_codec.decode( codeword );
+    cout<<"decode: ";
+    for(int i=0; i<(int) codeword.size(); i++){cout<<(int)codeword[i];}cout<<endl;
 
-    assert( corrections >= 0 ); // fail if BCH decode failed
     codeword.resize( codeword.size() - bch_codec.ecc_bytes() ); // discard parity
-
+    cout<<"remove parity: ";
+    for(int i=0; i<(int) codeword.size(); i++){cout<<(int)codeword[i];}cout<<endl;
 
     return 0;
 }

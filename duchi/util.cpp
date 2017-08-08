@@ -255,6 +255,8 @@ vector<double> tuplePerturbation(dataSet &data, double epsilon){
           ((tgamma(d-1+1)/(tgamma(d/2+1)*tgamma(d-1-d/2+1)))*(exp(epsilon)-1));
     }
 
+    cout<<"B: "<<B<<endl;
+
     // for each row
     for(int i=0; i<data.get_m(); i++){
         /////////////////////////////////// STEP 1

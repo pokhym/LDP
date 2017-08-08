@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <bitset>
+#include "c++/ezpwd/bch"
 
 #define TAB 0x09
 #define LARGENUMBER 9999999999

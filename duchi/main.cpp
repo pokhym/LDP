@@ -54,7 +54,7 @@ int main(int argc, const char* argv[]){
 	rep=7;
 
     for(int o=0; o<(rep); o++){
-	if(o==0){epsilon=0.05;}
+	if(o==0){epsilon=0.4;}
 	else if(o==1){epsilon=0.1;}
 	else if(o==2){epsilon=0.2;}
 	else if(o==3){epsilon=0.4;}
